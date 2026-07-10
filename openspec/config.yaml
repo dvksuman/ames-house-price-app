@@ -1,0 +1,25 @@
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+context: |
+  Graduate coursework project (AIMLCZG549 - API-Driven Cloud Native Solutions).
+  Domain: house sale price prediction (regression) on the Ames Housing dataset.
+  Tech stack: Python, FastAPI (API layer), Streamlit (dashboard, API-driven only —
+  never touches data/model/MLflow/Prefect directly), Prefect (DataOps scheduling),
+  MLflow (experiment tracking + model registry, local SQLite backend),
+  Docker Compose (local-only containerization, not deployed to a real cloud provider).
+  Models: Ridge/Lasso (linear) and XGBoost (tree ensemble), chosen to contrast
+  normalization-sensitive vs normalization-insensitive preprocessing.
+  Directory conventions: src/data, src/eda, src/ml, src/ops, src/api.
+  Solo project. Keep scope matched to the assignment rubric — do not gold-plate
+  with auth, multi-tenancy, real cloud deployment, or CI/CD beyond local Compose.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+rules:
+  proposal:
+    - Every capability listed under "What Changes" must map to a rubric sub-objective
+  tasks:
+    - Group tasks by pipeline stage, not by file, so progress maps to the rubric
+    - Each task should be independently verifiable (runnable/checkable on its own)

@@ -1,0 +1,89 @@
+## 1. Project Scaffolding
+
+- [x] 1.1 Create project structure (`src/data/`, `src/eda/`, `src/ml/`, `src/ops/`, `src/api/`, `data/`, `output/`)
+- [x] 1.2 Create `requirements.txt` (pandas, numpy, scikit-learn, xgboost, mlflow, prefect, fastapi, uvicorn, streamlit, plotly/matplotlib, pydantic, requests, kagglehub or similar)
+- [x] 1.3 Write `README.md` with business understanding: problem statement, objective, stakeholders (satisfies Business Understanding requirement)
+
+## 2. Data Ingestion
+
+- [ ] 2.1 Implement ingestion script that downloads the full Ames Housing dataset (Kaggle API, falling back to public CSV mirror if Kaggle credentials unavailable)
+- [ ] 2.2 Add a row-count assertion (>= 2,500 rows) that fails loudly if the wrong dataset variant loads
+- [ ] 2.3 Save raw dataset to `data/raw/ames_housing.csv`
+
+## 3. Data Preprocessing
+
+- [ ] 3.1 Implement summary statistics generation (describe()) for numeric columns, saved to `output/`
+- [ ] 3.2 Implement missing-value report (count + percentage per column)
+- [ ] 3.3 Implement median imputation for numeric columns with missing values
+- [ ] 3.4 Implement categorical missing-value handling (e.g. fill with "None"/mode as appropriate per Ames Housing's documented semantics)
+- [ ] 3.5 Implement dtype reporting/logging for all columns
+- [ ] 3.6 Implement normalization (StandardScaler) of numeric features, saved as a separate scaled feature set for the linear model
+- [ ] 3.7 Save processed dataset to `data/processed/`
+
+## 4. Exploratory Data Analysis
+
+- [ ] 4.1 Compute correlation matrix of numeric features vs. SalePrice, save top correlated features
+- [ ] 4.2 Analyze at least one categorical feature vs. SalePrice (group-by mean)
+- [ ] 4.3 Bin at least one continuous feature (e.g. house age from YearBuilt) into ranges, report counts per bin
+- [ ] 4.4 Encode categorical features (one-hot for nominal, ordinal encoding for quality-scale fields), produce fully numeric feature matrix
+- [ ] 4.5 Generate univariate plot (SalePrice distribution) and save as image artifact
+- [ ] 4.6 Generate bivariate plot (top feature vs. SalePrice scatter) and save as image artifact
+- [ ] 4.7 Generate correlation heatmap and save as image artifact
+
+## 5. DataOps: Scheduled Pipeline (Prefect)
+
+- [ ] 5.1 Wrap ingestion + preprocessing + EDA steps (2 and 3 and 4) as Prefect tasks within a single flow
+- [ ] 5.2 Add logging within each Prefect task (start/end time, row counts, key stats) visible in Prefect's run logs
+- [ ] 5.3 Create a Prefect deployment for this flow with a 2-minute interval schedule
+- [ ] 5.4 Verify locally: start a Prefect server, apply the deployment, confirm runs appear in the Prefect UI every ~2 minutes with logs
+
+## 6. ML Pipeline: Training and Evaluation
+
+- [ ] 6.1 Implement 70/30 train/test split with a fixed random seed on the encoded feature matrix
+- [ ] 6.2 Train Ridge/Lasso regression on the normalized/scaled features
+- [ ] 6.3 Train XGBoost regression on the raw (unscaled) encoded features
+- [ ] 6.4 Compute RMSE, MAE, R², and MAPE for each model on the test set
+- [ ] 6.5 Produce a feature-importance ranking (coefficients for linear model, `feature_importances_` for XGBoost)
+- [ ] 6.6 Produce a side-by-side model comparison table/report
+
+## 7. MLOps: MLflow Tracking
+
+- [ ] 7.1 Configure MLflow tracking URI (local SQLite backend)
+- [ ] 7.2 Log hyperparameters, all 4 metrics, and the model artifact for each of the two training runs to MLflow
+- [ ] 7.3 Register the better-performing model in the MLflow Model Registry (e.g. stage "Staging" or "Production")
+- [ ] 7.4 Verify locally: start MLflow UI, confirm both runs, metrics, and registered model are visible
+
+## 8. API Layer (FastAPI)
+
+- [ ] 8.1 Define Pydantic request/response schemas for the prediction endpoint (house features in, predicted price + model version out)
+- [ ] 8.2 Implement `POST /predict` — loads the registered model from MLflow Model Registry, returns prediction
+- [ ] 8.3 Implement `GET /health` — checks MLflow and Prefect reachability, returns status
+- [ ] 8.4 Implement `GET /app-info/model` — wraps MLflow Model Registry API (name, version, stage)
+- [ ] 8.5 Implement `GET /app-info/experiment` — wraps MLflow Tracking API (experiment name, ID, latest run summary)
+- [ ] 8.6 Implement `GET /app-info/pipeline` — wraps Prefect deployments API (deployment name, schedule, flow name)
+- [ ] 8.7 Implement `GET /app-info/runs` — wraps Prefect flow-runs API (recent run statuses/timestamps)
+- [ ] 8.8 Add graceful 503 handling when MLflow/Prefect are unreachable from any `/app-info/*` endpoint
+- [ ] 8.9 Verify `/docs` (Swagger UI) renders all endpoints correctly
+
+## 9. Dashboard (Streamlit)
+
+- [ ] 9.1 Build EDA view: summary stats, correlation heatmap, univariate/bivariate charts — sourced only via calls to the FastAPI backend (serve pre-generated EDA artifacts through a FastAPI endpoint if needed)
+- [ ] 9.2 Build prediction view: form for house feature inputs, calls `POST /predict`, displays result
+- [ ] 9.3 Build app-details view: calls all four `/app-info/*` endpoints, displays results
+- [ ] 9.4 Confirm no direct dataset/model/MLflow/Prefect access exists in the Streamlit code — API calls only
+
+## 10. Containerization (Docker Compose)
+
+- [ ] 10.1 Write Dockerfile for the FastAPI service
+- [ ] 10.2 Write Dockerfile for the Streamlit dashboard
+- [ ] 10.3 Write `docker-compose.yml` wiring FastAPI, Streamlit, Prefect server, and MLflow server with a shared volume for data/artifacts, `depends_on`, and healthchecks
+- [ ] 10.4 Verify `docker compose up --build` brings up all 4 services and they can reach each other by service name
+
+## 11. End-to-End Verification
+
+- [ ] 11.1 Run the full stack, confirm the Prefect scheduled flow executes and appears in its UI
+- [ ] 11.2 Confirm MLflow shows both training runs with all 4 metrics and a registered model
+- [ ] 11.3 Confirm FastAPI `/predict` returns sensible predictions for a few sample inputs
+- [ ] 11.4 Confirm all four `/app-info/*` endpoints return real (non-hardcoded) data
+- [ ] 11.5 Confirm Streamlit dashboard renders EDA, prediction, and app-details views correctly end-to-end
+- [ ] 11.6 Capture screenshots of each verified view for the assignment report (manual, outside this change's scope)
