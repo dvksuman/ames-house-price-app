@@ -6,9 +6,10 @@
 
 ## 2. Data Ingestion
 
-- [ ] 2.1 Implement ingestion script that downloads the full Ames Housing dataset (Kaggle API, falling back to public CSV mirror if Kaggle credentials unavailable)
-- [ ] 2.2 Add a row-count assertion (>= 2,500 rows) that fails loudly if the wrong dataset variant loads
-- [ ] 2.3 Save raw dataset to `data/raw/ames_housing.csv`
+- [x] 2.0 Pre-ingestion setup: add `truststore` (Zscaler TLS fix) and `python-dotenv` (env config) to `requirements.txt`; create `.env` with service config; create `.gitignore` to exclude `.venv/`, `data/`, `output/`, `mlruns/`, `.env`
+- [x] 2.1 Implement ingestion script that downloads the full Ames Housing dataset (Kaggle API, falling back to public CSV mirror if Kaggle credentials unavailable)
+- [x] 2.2 Add a row-count assertion (>= 2,500 rows) that fails loudly if the wrong dataset variant loads
+- [x] 2.3 Save raw dataset to `data/raw/ames_housing.csv`
 
 ## 3. Data Preprocessing
 

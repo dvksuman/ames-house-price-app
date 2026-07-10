@@ -12,3 +12,5 @@ seaborn>=0.13
 pydantic>=2.5
 requests>=2.31
 kagglehub>=0.2
+python-dotenv>=1.0
+truststore>=0.9

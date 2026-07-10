@@ -61,6 +61,16 @@ Shared volume for the raw/processed dataset and EDA output artifacts (plots, log
 
 **"Built-in APIs" sub-objective implementation:** FastAPI endpoints that internally call MLflow's REST API and Prefect's REST API and reshape the response — e.g. `/app-info/model` (from MLflow registry API), `/app-info/experiment` (from MLflow experiment API), `/app-info/pipeline` (from Prefect deployments API), `/app-info/runs` (from Prefect flow-runs API). Satisfies "≥4 application/deployment details via built-in APIs" with real backing APIs, not mocked data.
 
+## Ingestion Design Decisions
+
+**Idempotency**: The ingestion step checks whether `data/raw/ames_housing.csv` already exists and has a valid row count before downloading. If it does, it skips the download and logs "using cached file." This prevents 720 unnecessary downloads per day from the Prefect 2-minute schedule against a dataset that never changes.
+
+**truststore shared utility**: All HTTPS calls on this machine go through Zscaler (corporate TLS-inspection proxy). `truststore.inject_into_ssl()` must be called once per Python process before any HTTPS request. Rather than repeating this in every module, a single `src/utils.py` calls it at import time — every other module that imports `src.utils` automatically gets the fix.
+
+**kagglehub cache + copy pattern**: `kagglehub.dataset_download()` saves files to `~/.cache/kagglehub/...`, not to a project-controlled path. The ingestion script must glob for the CSV inside the returned cache path and copy it to `data/raw/ames_housing.csv`. The jse.amstat.org fallback streams directly to `data/raw/` and does not have this complexity.
+
+**Kaggle dataset slug**: `marcopale/housing`, file `AmesHousing.csv` — verified: 2,930 rows × 82 columns, SalePrice present. Do NOT use `prevek18/ames-housing-dataset` or `shashanknecrothapa/ames-housing-dataset` — those are the 1,460-row competition split.
+
 ## Risks / Trade-offs
 
 - **[Risk] Kaggle API auth may not be set up on this machine, blocking dataset download.** → Mitigation: ingestion script tries Kaggle API first, falls back to a direct HTTPS download of the public Ames Housing CSV; document whichever path actually worked.
