@@ -258,4 +258,16 @@ with open("data/raw/ames_housing.csv", "wb") as f:
 
 ---
 
+## LL-10: matplotlib needs Agg backend when there is no display
+
+**When**: Group 4 EDA — saving plots to PNG files on a machine without a GUI display open.
+
+**What happened**: matplotlib by default tries to open a GUI window to show the chart. On a server or when running in a terminal without a display, this throws an error or hangs.
+
+**Fix**: Set `matplotlib.use("Agg")` before importing `matplotlib.pyplot`. The Agg backend renders charts entirely in memory and writes them to image files without needing a screen.
+
+**Takeaway**: Always set `matplotlib.use("Agg")` at the top of any script that saves plots to files. Must be called before `import matplotlib.pyplot as plt`.
+
+---
+
 *Last updated: 2026-07-10*

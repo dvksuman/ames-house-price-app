@@ -105,6 +105,44 @@ Preprocessing is responsible for cleaning and imputing only. Categorical encodin
 
 Both are saved as CSV files (not just logged) so they can be referenced in the assignment report without re-running the pipeline.
 
+## EDA Design Decisions
+
+**Log-transform SalePrice as the model target.**
+SalePrice has skewness = 1.744 (anything >1.0 is a signal to transform). Raw SalePrice
+confuses Ridge/Lasso because a $755k mansion creates a massive squared error that pulls
+the whole model off. log(SalePrice) squishes the expensive outliers closer to the rest,
+making the distribution more even. Metrics are computed in log-scale and converted back
+to dollars using exp() for reporting. This is standard practice for Ames Housing.
+
+**Ordinal encoding for quality-scale columns.**
+Columns like Exter Qual, Bsmt Qual, Kitchen Qual, Fireplace Qu, Garage Qual, Garage Cond,
+Pool QC use an explicit quality ranking documented in De Cock's data dictionary:
+Ex=5, Gd=4, TA=3, Fa=2, Po=1, None=0. Ordinal encoding preserves this known order and
+keeps the column count compact (1 column vs 5 one-hot columns). One-hot would lose the
+order and force the model to rediscover what we already know.
+
+Other ordinal columns with their own scales:
+- Bsmt Exposure: Gd=4, Av=3, Mn=2, No=1, None=0
+- BsmtFin Type 1/2: GLQ=6, ALQ=5, BLQ=4, Rec=3, LwQ=2, Unf=1, None=0
+- Garage Finish: Fin=3, RFn=2, Unf=1, None=0
+- Fence: GdPrv=4, MnPrv=3, GdWo=2, MnWo=1, None=0
+- Lot Shape: Reg=4, IR1=3, IR2=2, IR3=1
+- Land Slope: Gtl=3, Mod=2, Sev=1
+- Paved Drive: Y=3, P=2, N=1
+All remaining categorical columns (Neighbourhood, MS Zoning, House Style, etc.) → one-hot.
+
+**Correlation heatmap: top 15 features only.**
+Full 39×39 heatmap has 1,521 cells — unreadable in a report screenshot. Top 15 by
+absolute correlation with SalePrice gives a clear, readable chart focused on what matters.
+
+**Plot files saved to output/plots/ subfolder.**
+Keeps output/ organised — CSV reports and image artifacts in separate locations.
+Files: saleprice_dist.png, top_feature_scatter.png, correlation_heatmap.png.
+
+**Encoded dataset output.**
+EDA step (task 4.4) produces data/processed/ames_housing_encoded.csv — a fully numeric
+matrix (all categoricals encoded, log(SalePrice) as target) ready for model training.
+
 ## Risks / Trade-offs
 
 - **[Risk] Kaggle API auth may not be set up on this machine, blocking dataset download.** → Mitigation: ingestion script tries Kaggle API first, falls back to a direct HTTPS download of the public Ames Housing CSV; document whichever path actually worked.

@@ -23,13 +23,13 @@
 
 ## 4. Exploratory Data Analysis
 
-- [ ] 4.1 Compute correlation matrix of numeric features vs. SalePrice, save top correlated features
-- [ ] 4.2 Analyze at least one categorical feature vs. SalePrice (group-by mean)
-- [ ] 4.3 Bin at least one continuous feature (e.g. house age from YearBuilt) into ranges, report counts per bin
-- [ ] 4.4 Encode categorical features (one-hot for nominal, ordinal encoding for quality-scale fields), produce fully numeric feature matrix
-- [ ] 4.5 Generate univariate plot (SalePrice distribution) and save as image artifact
-- [ ] 4.6 Generate bivariate plot (top feature vs. SalePrice scatter) and save as image artifact
-- [ ] 4.7 Generate correlation heatmap and save as image artifact
+- [x] 4.1 Compute correlation matrix of numeric features vs. SalePrice, save top correlated features
+- [x] 4.2 Analyze at least one categorical feature vs. SalePrice (group-by mean)
+- [x] 4.3 Bin at least one continuous feature (e.g. house age from YearBuilt) into ranges, report counts per bin
+- [x] 4.4 Encode categorical features (one-hot for nominal, ordinal encoding for quality-scale fields), produce fully numeric feature matrix
+- [x] 4.5 Generate univariate plot (SalePrice distribution) and save as image artifact
+- [x] 4.6 Generate bivariate plot (top feature vs. SalePrice scatter) and save as image artifact
+- [x] 4.7 Generate correlation heatmap and save as image artifact
 
 ## 5. DataOps: Scheduled Pipeline (Prefect)
 
