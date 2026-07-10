@@ -244,4 +244,18 @@ with open("data/raw/ames_housing.csv", "wb") as f:
 
 ---
 
+## LL-09: pandas reads "None" strings back as NaN from CSV
+
+**When**: Group 3 preprocessing verification — processed CSV showed 15,066 nulls after imputation that had already been filled.
+
+**What happened**: We filled semantic-NA categorical columns with the string `"None"` (e.g. Pool QC → "None" means "no pool"). The values were written correctly to CSV. But when reading the file back with `pd.read_csv()`, pandas converted every `"None"` back to `NaN` because `"None"` is in pandas' built-in NA string list (`na_values` defaults).
+
+**Why it happened**: pandas `read_csv()` treats many strings as NA by default: `""`, `"NA"`, `"NaN"`, `"None"`, `"null"`, `"N/A"` and others. It does this silently — no warning, the column just has NaN where you expect a string.
+
+**Fix**: Added `read_processed_csv()` to `src/utils.py` which calls `pd.read_csv(path, keep_default_na=False, na_values=[""])`. This disables all built-in NA string detection and only treats empty cells as NaN. Every downstream script (EDA, training, API) must use this function instead of `pd.read_csv()` directly when reading processed CSV files.
+
+**Takeaway**: Never use `pd.read_csv()` directly on a CSV that contains `"None"` as a real category value. Use `keep_default_na=False, na_values=[""]` or a shared reader utility.
+
+---
+
 *Last updated: 2026-07-10*

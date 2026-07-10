@@ -71,6 +71,40 @@ Shared volume for the raw/processed dataset and EDA output artifacts (plots, log
 
 **Kaggle dataset slug**: `marcopale/housing`, file `AmesHousing.csv` — verified: 2,930 rows × 82 columns, SalePrice present. Do NOT use `prevek18/ames-housing-dataset` or `shashanknecrothapa/ames-housing-dataset` — those are the 1,460-row competition split.
 
+## Preprocessing Design Decisions
+
+**Two kinds of missing values — treated differently:**
+The Ames Housing dataset has two semantically distinct types of missing data.
+Treating them uniformly (e.g. median-fill everything) is incorrect.
+
+- *Semantic NA*: columns like `Pool QC` (99.6% missing), `Alley` (93.2%), `Garage Cond` (5.4%), `Bsmt Qual` (2.7%) — missing means the house literally has no pool/alley/garage/basement. These categorical columns are filled with the literal string `"None"`, not the mode.
+- *Truly missing measurement*: columns like `Lot Frontage` (16.7%), `Mas Vnr Area` (0.8%) — the value wasn't recorded. These numeric columns are filled with the column median.
+
+**Garage Yr Blt: fill with 0, not median.**
+`Garage Yr Blt` missing (5.4%) means "no garage." Filling with the median (~1979) would imply the house has a garage built in 1979, which is false. Filling with 0 is honest and XGBoost handles 0 naturally. For Ridge/Lasso the value gets scaled anyway, so 0 is the correct sentinel.
+
+**Why semantic NA columns get "None" not mode:**
+For columns like `Pool QC`, `Alley`, `Fireplace Qu` etc., missing means the house
+literally doesn't have that feature — not that someone forgot to record it.
+Filling with mode (e.g. Pool QC mode = "Ex") would tell the model "99.6% of houses
+have an Excellent pool" which is false. Filling with "None" tells the truth:
+"this house has no pool." The one exception is `Electrical` (1 row missing) —
+every house has electricity, so 1 missing = data entry gap → fill with mode ("SBrkr").
+
+**Encoding stays in Group 4 (EDA), not here.**
+Preprocessing is responsible for cleaning and imputing only. Categorical encoding (one-hot for nominal, ordinal for quality-scale fields) happens in the EDA step (task 4.4) where feature analysis also occurs. This keeps each file's responsibility clear.
+
+**Two outputs for two model consumers:**
+- `data/processed/ames_housing_processed.csv` — cleaned, imputed, unscaled (XGBoost input; also base for EDA)
+- `data/processed/ames_housing_scaled.csv` — same but StandardScaler applied to numeric columns (Ridge/Lasso input)
+- `data/processed/scaler.joblib` — the fitted StandardScaler saved to disk; required at prediction time to transform new inputs the same way as training data. Must fit only on training data (done in Group 6), not the full dataset.
+
+**Summary stats and missing value report saved as files:**
+- `output/summary_stats.csv` — numeric describe() output
+- `output/missing_values.csv` — per-column missing count + percentage
+
+Both are saved as CSV files (not just logged) so they can be referenced in the assignment report without re-running the pipeline.
+
 ## Risks / Trade-offs
 
 - **[Risk] Kaggle API auth may not be set up on this machine, blocking dataset download.** → Mitigation: ingestion script tries Kaggle API first, falls back to a direct HTTPS download of the public Ames Housing CSV; document whichever path actually worked.

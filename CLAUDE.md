@@ -26,9 +26,25 @@ built and why.
 
 ## Working style
 
+**HARD GATE — explore before every new group:**
+Before implementing any new task group, ALWAYS run `/opsx:explore` to think through
+best practices, design decisions, tradeoffs, and non-obvious pitfalls for that group.
+Do NOT write any code until the explore session is complete and the user says to proceed.
+Skipping this step is not allowed, even if the task seems straightforward.
+
 Implement one `tasks.md` group at a time, not the whole file in one pass. After each
 group, explain the key concepts/decisions in the generated code before moving to the
 next group (the user is optimizing for learning, not just a working app).
+
+## Design decisions — automatic updates
+
+Whenever the user clarifies, answers a question, or makes a design choice during
+any session (e.g. "use 0 not median", "keep encoding in Group 4", "save as CSV"),
+record it immediately in `openspec/changes/build-house-price-app/design.md` under
+the relevant group's section. Do not wait for the user to ask.
+
+Include: the decision itself, the rationale/reason the user gave (or the reasoning
+behind the recommended option they accepted), and any implications for other groups.
 
 ## Lessons Learned — automatic updates
 
@@ -42,6 +58,29 @@ Entry format: LL-NN title, When, What happened, Why it happened, Fix, Takeaway.
 
 This rule exists so the document grows organically as problems are found, not
 as a summary exercise at the end when details are forgotten.
+
+## Task completion checklist — MANDATORY before moving to next task
+
+After every task is done, complete ALL of the following steps in order before
+starting the next task. Do not skip any step, even if it seems unnecessary.
+
+1. **Run the code** — execute the script and confirm it produces real output
+2. **Verify outputs** — check files were created, row counts are right, nulls are gone, etc.
+3. **Mark `[x]` in tasks.md** — update the task checkbox immediately
+4. **Update LESSONS_LEARNED.md** — append any non-trivial problem that was hit and fixed
+5. **Update TOI.md** — append any new useful command used during the task
+6. **Update design.md** — record any design decision or clarification made during the task
+7. **Git commit** — create a checkpoint commit before moving to the next group
+
+## No cheating, no shortcuts, always ask when in doubt
+
+- **No cheating**: Never fake, mock, hardcode, or fabricate data, outputs, or results.
+  Every number, file, and metric must come from actually running the code.
+- **No shortcuts**: Do not skip steps, bypass validation, or cut corners to make
+  something "just work." If a task is hard, understand why and fix it properly.
+- **Always ask when in doubt**: If the requirement is unclear, the right approach is
+  uncertain, or two options seem equally valid — STOP and ask the user before proceeding.
+  A wrong assumption wastes more time than a clarifying question.
 
 ## Code comments — mandatory
 

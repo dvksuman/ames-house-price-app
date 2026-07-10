@@ -13,13 +13,13 @@
 
 ## 3. Data Preprocessing
 
-- [ ] 3.1 Implement summary statistics generation (describe()) for numeric columns, saved to `output/`
-- [ ] 3.2 Implement missing-value report (count + percentage per column)
-- [ ] 3.3 Implement median imputation for numeric columns with missing values
-- [ ] 3.4 Implement categorical missing-value handling (e.g. fill with "None"/mode as appropriate per Ames Housing's documented semantics)
-- [ ] 3.5 Implement dtype reporting/logging for all columns
-- [ ] 3.6 Implement normalization (StandardScaler) of numeric features, saved as a separate scaled feature set for the linear model
-- [ ] 3.7 Save processed dataset to `data/processed/`
+- [x] 3.1 Implement summary statistics generation (describe()) for numeric columns, saved to `output/`
+- [x] 3.2 Implement missing-value report (count + percentage per column)
+- [x] 3.3 Implement median imputation for numeric columns with missing values
+- [x] 3.4 Implement categorical missing-value handling (e.g. fill with "None"/mode as appropriate per Ames Housing's documented semantics)
+- [x] 3.5 Implement dtype reporting/logging for all columns
+- [x] 3.6 Implement normalization (StandardScaler) of numeric features, saved as a separate scaled feature set for the linear model
+- [x] 3.7 Save processed dataset to `data/processed/`
 
 ## 4. Exploratory Data Analysis
 
