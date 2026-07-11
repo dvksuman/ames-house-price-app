@@ -486,3 +486,33 @@ input_df = input_df[model_col_order]
 ---
 
 *Last updated: 2026-07-11*
+
+---
+
+## LL-11 MLflow artifact paths are absolute host paths — must match inside container
+
+**When**: Group 10 — Docker Compose verification
+
+**What happened**: FastAPI failed with `No such artifact: ''` even after MLflow was reachable. The artifact URIs stored in `mlruns.db` were absolute host paths (`/Users/dvksuman/API/mlruns/...`) from when models were trained locally.
+
+**Why**: MLflow records the artifact URI at training time using the local filesystem path. Inside Docker, `mlruns/` was mounted at `/app/mlruns`, not at the original path.
+
+**Fix**: Added a second volume mount in the api service: `./mlruns:/Users/dvksuman/API/mlruns` — mapping the host directory to the exact path MLflow stored in its DB.
+
+**Takeaway**: When reusing an existing MLflow SQLite DB in Docker, mount the artifact directory at the same absolute path used during training, not just a convenient container path.
+
+---
+
+## LL-12 MLflow 3.x rejects Host headers with port numbers
+
+**When**: Group 10 — Docker Compose
+
+**What happened**: MLflow 3.x added DNS-rebinding protection that validates the `Host` header. `--allowed-hosts mlflow` wasn't enough — the client sends `mlflow:5000` (with port), which was rejected.
+
+**Fix**: Pass both forms: `--allowed-hosts mlflow,mlflow:5000,localhost,127.0.0.1,localhost:5000`.
+
+**Takeaway**: Always include the `hostname:port` form in MLflow's allowed hosts, not just the hostname.
+
+---
+
+*Last updated: 2026-07-11*

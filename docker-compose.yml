@@ -8,7 +8,7 @@ services:
   # Serves the MLflow REST API (used by FastAPI + Prefect worker) and the MLflow UI.
   mlflow:
     # Use the official MLflow Docker image so we don't need to install it manually.
-    image: ghcr.io/mlflow/mlflow:v2.13.0
+    image: ghcr.io/mlflow/mlflow:v3.14.0
     # Map host port 5000 to container port 5000 so the MLflow UI is reachable in a browser.
     ports:
       - "5000:5000"
@@ -17,13 +17,15 @@ services:
       - ./mlruns:/app/mlruns
       - ./mlruns.db:/app/mlruns.db
     # Start the MLflow server using the SQLite file as the tracking backend.
-    # --host 0.0.0.0 makes it reachable from other containers and the host machine.
+    # --allowed-hosts adds "mlflow" (the Docker service name) to the allowlist so
+    # other containers can reach it without triggering the DNS-rebinding protection.
     command: >
       mlflow server
       --backend-store-uri sqlite:////app/mlruns.db
       --default-artifact-root /app/mlruns
       --host 0.0.0.0
       --port 5000
+      --allowed-hosts mlflow,mlflow:5000,localhost,127.0.0.1,localhost:5000
     # Healthcheck: poll the MLflow health endpoint every 10 seconds.
     # Other services wait for this to pass before starting.
     healthcheck:
@@ -36,8 +38,9 @@ services:
   # ── 2. Prefect server ──────────────────────────────────────────────────────
   # The Prefect control plane: stores flow run history, deployment config, and serves the UI.
   prefect-server:
-    # Use the same Prefect version already installed in the project.
-    image: prefecthq/prefect:2-latest
+    # Use Prefect 3.x to match the pip-installed client version (3.7.7).
+    # Mixing Prefect 2 server with Prefect 3 client causes 422 errors on flow registration.
+    image: prefecthq/prefect:3-latest
     # Map host port 4200 so the Prefect UI is reachable in a browser.
     ports:
       - "4200:4200"
@@ -91,9 +94,13 @@ services:
     ports:
       - "8000:8000"
     # Mount data/ and output/ so FastAPI can serve pre-generated EDA plots and load model files.
+    # Also mount mlruns/ at its original host path because MLflow stored artifact URIs as
+    # absolute paths (/Users/dvksuman/API/mlruns/...) when the model was trained locally.
+    # The api container must see those same paths or mlflow.pyfunc.load_model() will fail.
     volumes:
       - ./data:/app/data
       - ./output:/app/output
+      - ./mlruns:/Users/dvksuman/API/mlruns
     # Point FastAPI to the containerised MLflow and Prefect services by service name.
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5000

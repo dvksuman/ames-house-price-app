@@ -83,7 +83,7 @@
 - [x] 10.1 Write Dockerfile for the FastAPI service
 - [x] 10.2 Write Dockerfile for the Streamlit dashboard
 - [x] 10.3 Write `docker-compose.yml` wiring FastAPI, Streamlit, Prefect server, and MLflow server with a shared volume for data/artifacts, `depends_on`, and healthchecks
-- [ ] 10.4 Verify `docker compose up --build` brings up all 4 services and they can reach each other by service name
+- [x] 10.4 Verify `docker compose up --build` brings up all 4 services and they can reach each other by service name
 
 ## 11. End-to-End Verification
 
