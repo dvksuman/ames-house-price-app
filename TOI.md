@@ -150,6 +150,38 @@ services:
       - .env
 ```
 
+## Prefect — local server + scheduled flow
+
+```bash
+# Always run from project root
+cd /Users/dvksuman/API
+
+# Start Prefect server (keep this terminal open; override .env Docker URL)
+PREFECT_API_URL=http://127.0.0.1:4200/api prefect server start --host 127.0.0.1 --port 4200
+
+# In a second terminal: start the flow (registers deployment + acts as worker)
+cd /Users/dvksuman/API
+PREFECT_API_URL=http://127.0.0.1:4200/api python -m src.ops.pipeline_flow
+
+# Trigger a manual run immediately (don't wait for schedule)
+PREFECT_API_URL=http://127.0.0.1:4200/api prefect deployment run 'ames-housing-pipeline/ames-housing-2min'
+
+# Check what deployments are registered
+PREFECT_API_URL=http://127.0.0.1:4200/api prefect deployment ls
+
+# Check flow run statuses (SCHEDULED / RUNNING / COMPLETED / FAILED)
+PREFECT_API_URL=http://127.0.0.1:4200/api prefect flow-run ls
+
+# Check Prefect's resolved config (shows which .env values it picked up)
+prefect config view
+
+# Check Prefect version
+python -c "import prefect; print(prefect.__version__)"
+
+# Open Prefect UI in browser
+open http://127.0.0.1:4200
+```
+
 ## Environment inspection
 
 ```bash

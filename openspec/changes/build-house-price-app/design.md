@@ -143,6 +143,26 @@ Files: saleprice_dist.png, top_feature_scatter.png, correlation_heatmap.png.
 EDA step (task 4.4) produces data/processed/ames_housing_encoded.csv — a fully numeric
 matrix (all categoricals encoded, log(SalePrice) as target) ready for model training.
 
+## DataOps / Prefect Design Decisions (Group 5)
+
+**Wrapping approach: direct Python function calls, not subprocess.**
+Each existing function (`ingest()`, `preprocess()`, `run_eda()`) is imported inside the `@task` body and called directly. This lets stdlib `logging` output flow into the Prefect UI automatically, lets task return values (file paths) be passed between tasks as arguments, and keeps everything in a single Python process. Subprocess would lose all of this.
+
+**Logging strategy: Prefect logger for task boundaries, stdlib logger for internals.**
+Each `@task` calls `get_run_logger()` to log a ▶ start message and ✓ completion message with row/column counts. The existing `logger.info()` calls inside `ingest()`, `preprocess()`, and `run_eda()` continue to emit normally — Prefect 3.x captures stdlib `logging` records from within task execution context and routes them to the UI.
+
+**Deployment: `flow.serve()` not `prefect deploy` + worker.**
+`pipeline.serve(name=..., interval=timedelta(minutes=2))` is a single call that registers the deployment with the local Prefect server AND acts as the executor. No separate work pool or worker process needed. Runs every 2 minutes. This is the right choice for a local demo/assignment.
+
+**Working directory: set explicitly at module level.**
+`pipeline_flow.py` calls `os.chdir(PROJECT_ROOT)` at import time (where `PROJECT_ROOT` is derived from `Path(__file__)`). All three existing scripts use relative paths (`data/raw/...`, `data/processed/...`, `output/...`). Without this, a serve process started from any other directory would silently write to the wrong paths or raise `FileNotFoundError`.
+
+**Local URL override for Prefect server + serve.**
+`.env` has `PREFECT_API_URL=http://prefect:4200/api` (Docker hostname). Prefect 3.x reads `.env` files automatically, so starting `prefect server start` without override causes the UI to point at `http://prefect:4200/api` instead of localhost. Fix: always start server and serve with `PREFECT_API_URL=http://127.0.0.1:4200/api` in the shell. Docker Compose supplies the Docker value via `env_file`, so `.env` remains correct for both contexts.
+
+**Idempotency: ingest already handles it.**
+`ingest()` checks for an existing valid file before downloading. The 2-minute schedule does NOT re-download from Kaggle every 2 minutes — it skips to "using cached file" in ~0.1s. Preprocess and EDA re-run and overwrite outputs on every scheduled execution, which is fine for a static dataset.
+
 ## Risks / Trade-offs
 
 - **[Risk] Kaggle API auth may not be set up on this machine, blocking dataset download.** → Mitigation: ingestion script tries Kaggle API first, falls back to a direct HTTPS download of the public Ames Housing CSV; document whichever path actually worked.

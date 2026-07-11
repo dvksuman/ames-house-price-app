@@ -284,4 +284,39 @@ with open("data/raw/ames_housing.csv", "wb") as f:
 
 ---
 
+## LL-12: Prefect UI shows wrong API URL when .env has a Docker hostname
+
+**When**: Group 5, first attempt to view the Prefect UI in a browser.
+
+**What happened**: Opening `http://127.0.0.1:4200` showed "Can't connect to Server API at http://prefect:4200/api." The server was running, but the UI was trying to reach the Docker service hostname instead of localhost.
+
+**Why it happened**: Prefect 3.x reads `.env` files in the current directory automatically (not just via python-dotenv). Our `.env` has `PREFECT_API_URL=http://prefect:4200/api` for Docker Compose. The Prefect server picks this up and tells the UI frontend to use that URL.
+
+**Fix**: Start the server with the env var explicitly overridden in the shell:
+```bash
+PREFECT_API_URL=http://127.0.0.1:4200/api prefect server start --host 127.0.0.1 --port 4200
+```
+The same override is needed when running the serve process:
+```bash
+PREFECT_API_URL=http://127.0.0.1:4200/api python -m src.ops.pipeline_flow
+```
+
+**Takeaway**: A `.env` file with Docker service names breaks local Prefect server + UI. Always override `PREFECT_API_URL` in the shell when running locally. The Docker value in `.env` stays correct for docker-compose; the shell override handles local dev.
+
+---
+
+## LL-13: `python -m src.ops.pipeline_flow` fails if not run from project root
+
+**When**: Group 5, restarting the serve process after killing the old one.
+
+**What happened**: `ModuleNotFoundError: No module named 'src'` when running `python -m src.ops.pipeline_flow` from a different directory.
+
+**Why it happened**: The `src` package is resolved relative to the current working directory. Running from any directory other than `/Users/dvksuman/API` means Python can't find the `src` package.
+
+**Fix**: Always `cd /Users/dvksuman/API` first, or use an absolute path with the `-m` flag. The flow file also sets `os.chdir(PROJECT_ROOT)` at module level as an extra safety net for relative file paths inside tasks.
+
+**Takeaway**: For any project using `python -m src.something`, the CWD must be the project root. Keep a `cd /Users/dvksuman/API` at the start of any Prefect-related command in TOI.md.
+
+---
+
 *Last updated: 2026-07-10*

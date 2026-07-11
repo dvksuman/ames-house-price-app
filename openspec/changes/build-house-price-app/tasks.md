@@ -37,10 +37,10 @@
 
 ## 5. DataOps: Scheduled Pipeline (Prefect)
 
-- [ ] 5.1 Wrap ingestion + preprocessing + EDA steps (2 and 3 and 4) as Prefect tasks within a single flow
-- [ ] 5.2 Add logging within each Prefect task (start/end time, row counts, key stats) visible in Prefect's run logs
-- [ ] 5.3 Create a Prefect deployment for this flow with a 2-minute interval schedule
-- [ ] 5.4 Verify locally: start a Prefect server, apply the deployment, confirm runs appear in the Prefect UI every ~2 minutes with logs
+- [x] 5.1 Wrap ingestion + preprocessing + EDA steps (2 and 3 and 4) as Prefect tasks within a single flow
+- [x] 5.2 Add logging within each Prefect task (start/end time, row counts, key stats) visible in Prefect's run logs
+- [x] 5.3 Create a Prefect deployment for this flow with a 2-minute interval schedule
+- [x] 5.4 Verify locally: start a Prefect server, apply the deployment, confirm runs appear in the Prefect UI every ~2 minutes with logs
 
 ## 6. ML Pipeline: Training and Evaluation
 
