@@ -332,3 +332,29 @@ docker compose exec api python -c "import urllib.request; print(urllib.request.u
 # From inside the streamlit container, check that the FastAPI is reachable
 docker compose exec streamlit python -c "import urllib.request; print(urllib.request.urlopen('http://api:8000/health').read())"
 ```
+
+## Prefect API — query completed flow runs for a deployment
+```bash
+# Get deployment ID first
+curl -s "http://localhost:4200/api/deployments/filter" -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"limit": 10}' | python3 -c "import json,sys; [print(d['name'], d['id']) for d in json.load(sys.stdin)]"
+
+# Then filter completed runs for that deployment
+curl -s "http://localhost:4200/api/flow_runs/filter" -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "deployments": {"id": {"any_": ["<deployment-id>"]}},
+    "flow_runs": {"state": {"name": {"any_": ["Completed","Failed","Running"]}}},
+    "sort": "START_TIME_DESC", "limit": 10
+  }'
+```
+
+## Prefect API OpenAPI schema (to find correct filter body keys)
+```bash
+curl -s http://localhost:4200/api/openapi.json | python3 -c "
+import json,sys; spec=json.load(sys.stdin)
+body = spec['components']['schemas']['Body_read_flow_runs_flow_runs_filter_post']
+print(list(body['properties'].keys()))
+"
+```

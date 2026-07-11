@@ -108,9 +108,9 @@ def show():
             # Build a row with the key metrics we care about.
             rows.append({
                 "Model": model_name.capitalize(),
-                "R²": round(metrics.get("r2", 0), 4),
-                "RMSE ($)": round(metrics.get("rmse", 0), 0),
-                "MAPE": round(metrics.get("mape", 0), 4),
+                "R²": round(metrics.get("R2", 0), 4),
+                "RMSE ($)": round(metrics.get("RMSE_dollars", 0), 0),
+                "MAPE (%)": round(metrics.get("MAPE_pct", 0), 2),
             })
         except Exception as e:
             # If a model's metrics can't be fetched, show a dash row.
@@ -136,10 +136,12 @@ def show():
         col2.metric("Flow Name", pipeline_info.get("flow_name", "—"))
         col1.metric("Status", str(pipeline_info.get("status", "—")))
 
-        # Show the schedule if present.
+        # Show the schedule interval in a human-readable form.
         schedules = pipeline_info.get("schedule")
-        if schedules:
-            st.caption(f"Schedule: {schedules}")
+        if schedules and isinstance(schedules, list) and schedules:
+            interval_sec = schedules[0].get("schedule", {}).get("interval")
+            if interval_sec:
+                st.caption(f"Schedule: every {int(interval_sec)} seconds ({int(interval_sec)//60} min)")
 
         with st.expander("Raw pipeline response"):
             st.json(pipeline_info)

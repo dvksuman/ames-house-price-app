@@ -256,3 +256,15 @@ None blocking — proceed to specs/tasks. Resolve the Kaggle-vs-CSV-mirror inges
 **Bind mounts over named volumes**: `./data`, `./mlruns`, `./output` are mounted from the host so trained models and EDA plots are immediately available without re-training. Correct choice for local-only containerization with pre-existing artifacts.
 
 **Startup dependency chain**: `mlflow` and `prefect-server` start in parallel → `api` and `prefect-worker` wait for both to be healthy → `streamlit` waits for `api` to be healthy. Enforced via `depends_on` + `condition: service_healthy`.
+
+## Group 11 — End-to-End Verification
+
+**MLflow 3.x uses aliases, not stages**: Model registered with alias `production` (via `client.set_registered_model_alias()`). The `/app-info/model` endpoint queries by alias, not stage. `current_stage` in the API response is `"None"` — this is expected for MLflow 3.x.
+
+**Prefect deployment name**: The deployment registered by `pipeline.serve(name="ames-housing-2min")` uses `"ames-housing-2min"` — this is what must be passed to `/app-info/pipeline/{name}` and `/app-info/runs/{name}`.
+
+**`/app-info/experiment/{model_name}` takes model type, not registry name**: Accepts `ridge`, `lasso`, or `xgboost` (the `model_type` param logged during training), not the MLflow registry model name `AmesPricePredictor`.
+
+**`/app-info/runs` filter fix**: Prefect 3 API body uses `"deployments"` and `"flow_runs"` as outer keys (not `"deployment_filter"`/`"flow_run_filter"`). Added state filter for `Completed/Failed/Running` to exclude future SCHEDULED runs which otherwise sort to the top with `START_TIME_DESC`.
+
+**Prediction values with default inputs**: Predicting with only a few fields set (rest defaulting to 0) gives lower-than-real predictions (e.g. $155,932 for median inputs via form). This is expected model behaviour — the form uses dataset median values as defaults, not zeros.

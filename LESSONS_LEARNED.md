@@ -516,3 +516,31 @@ input_df = input_df[model_col_order]
 ---
 
 *Last updated: 2026-07-11*
+
+## LL-12 Prefect flow_runs/filter uses "deployments" + "flow_runs" as body keys, not "deployment_filter"
+
+**When**: Group 11 — `/app-info/runs` returned only SCHEDULED runs, hiding completed ones.
+
+**What happened**: The Prefect 3 REST API `POST /flow_runs/filter` body uses `deployments` (not `deployment_filter`) and `flow_runs` (not `flow_run_filter`) for filter objects. Using the wrong keys silently ignored the filter, returning all runs sorted by `START_TIME_DESC` — which puts null-start SCHEDULED runs first, burying completed ones.
+
+**Why**: Prefect 3 API schema changed from Prefect 2. The correct schema was found at `GET /api/openapi.json` → `Body_read_flow_runs_flow_runs_filter_post`.
+
+**Fix**: Changed filter body to `{"deployments": {"id": ...}, "flow_runs": {"state": {"name": {"any_": ["Completed", ...]}}}}`.
+
+**Takeaway**: When Prefect API filters seem silently ignored, check the OpenAPI spec at `/api/openapi.json` — the body key names are not intuitive and differ from what you'd expect.
+
+---
+
+## LL-13 Streamlit dashboard metric key mismatch — API keys must be checked exactly
+
+**When**: Group 11 — Section 3 "Experiment Metrics" showed empty/zero rows.
+
+**What happened**: The dashboard used `metrics.get("r2")`, `metrics.get("rmse")`, `metrics.get("mape")` but the FastAPI response returns `R2`, `RMSE_dollars`, `MAPE_pct` (exact case from MLflow). All `.get()` calls returned 0 silently.
+
+**Fix**: Updated key lookups in `app_details.py` to match actual API response keys.
+
+**Takeaway**: When a dashboard table shows all zeros, check that the dict key names match exactly — Python dict `.get()` with a wrong key returns the default (0) silently, not an error.
+
+---
+
+*Last updated: 2026-07-11*

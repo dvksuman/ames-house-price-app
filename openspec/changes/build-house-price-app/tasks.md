@@ -87,9 +87,9 @@
 
 ## 11. End-to-End Verification
 
-- [ ] 11.1 Run the full stack, confirm the Prefect scheduled flow executes and appears in its UI
-- [ ] 11.2 Confirm MLflow shows both training runs with all 4 metrics and a registered model
-- [ ] 11.3 Confirm FastAPI `/predict` returns sensible predictions for a few sample inputs
-- [ ] 11.4 Confirm all four `/app-info/*` endpoints return real (non-hardcoded) data
-- [ ] 11.5 Confirm Streamlit dashboard renders EDA, prediction, and app-details views correctly end-to-end
+- [x] 11.1 Run the full stack, confirm the Prefect scheduled flow executes and appears in its UI
+- [x] 11.2 Confirm MLflow shows both training runs with all 4 metrics and a registered model
+- [x] 11.3 Confirm FastAPI `/predict` returns sensible predictions for a few sample inputs
+- [x] 11.4 Confirm all four `/app-info/*` endpoints return real (non-hardcoded) data
+- [x] 11.5 Confirm Streamlit dashboard renders EDA, prediction, and app-details views correctly end-to-end
 - [ ] 11.6 Capture screenshots of each verified view for the assignment report (manual, outside this change's scope)

@@ -851,7 +851,10 @@ def app_info_runs(deployment_name: str):
         runs_resp = httpx.post(
             f"{PREFECT_API_URL}/flow_runs/filter",
             json={
-                "deployment_filter": {"id": {"any_": [deployment_id]}},
+                # Prefect 3 API: outer key is "deployments", inner FlowRunFilter is "flow_runs".
+                "deployments": {"id": {"any_": [deployment_id]}},
+                # Exclude SCHEDULED (future) runs — they have null start_time and sort first.
+                "flow_runs": {"state": {"name": {"any_": ["Completed", "Failed", "Crashed", "Running"]}}},
                 "sort": "START_TIME_DESC",
                 "limit": 10,
             },
