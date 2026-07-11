@@ -130,31 +130,116 @@ is done and keeps the active changes list clean for the next piece of work.
 
 ## 3. The SESSION Files
 
-SESSION files are handoff documents — written at the end of each work session so
-the next session can pick up exactly where things left off without re-deriving state.
+### The problem they solve
 
-### What they contain
+This project was built across multiple work sessions over several days. Claude Code
+has a context window — it can only "remember" a certain amount of conversation before
+older messages are compressed or lost. When a session ends and a new one begins,
+Claude starts completely fresh. It has no memory of:
 
-Each SESSION file has:
-- Which task groups are complete
-- The last git commit hash
-- Key things that were verified working
-- Bugs that were fixed
-- The **exact next step** — which group, which task number
+- Which tasks were finished
+- What was verified working
+- What bugs were fixed and how
+- What the next step is
+
+Without a handoff document, every new session wastes 10–15 minutes re-deriving this
+state — re-reading git log, re-checking which files exist, re-running health checks
+just to figure out where to start.
+
+SESSION files solve this by writing down everything that matters, in one place,
+at the moment it's freshest — right after the session's final commit.
+
+---
+
+### What a SESSION file contains
+
+A SESSION file is a structured snapshot of exactly where the project stands. It has:
+
+**1. Date and last commit hash**
+So you can instantly locate the exact state in git if you need to go back.
+
+**2. A group-by-group status table**
+Every task group listed with its status — complete, in-progress, or not started.
+You don't need to open tasks.md to get the overview.
+
+**3. What was verified working**
+Not just "it was built" but "it was run and checked." For example:
+> MLflow — healthy, 3 models registered, alias `production` on v2
+> Prefect — `ames-housing-2min` deployment running every 2 min
+
+This matters because a task can be marked `[x]` even if the service had a bug
+that was fixed later. The SESSION file records what was *actually* working at
+the end of the session.
+
+**4. Bugs fixed during the session**
+Every non-trivial bug that was discovered and fixed. For example:
+> `src/api/main.py` — Prefect flow_runs/filter body keys were wrong.
+> Used `"deployment_filter"` but correct key is `"deployments"`.
+> Silent failure returned only SCHEDULED runs, not completed ones.
+
+This is a summary of what's in LESSONS_LEARNED.md — the key things you'd want
+to know if something breaks again.
+
+**5. The exact next step**
+Not "continue with Group 11" but the precise instruction to paste at the start
+of the next session:
+> "Read `SESSION_2026-07-11_groups1-10.md` and continue with Group 11.
+> Run `/opsx:explore` first."
+
+This one line is the most important part of the file. It eliminates all
+ambiguity about where to resume.
+
+---
 
 ### How to use them
 
-At the start of a new session:
-1. Read the SESSION file first (before anything else)
-2. Use the "Exact next step" section to know where to continue
-3. Skip re-reading git log, re-running checks, or re-deriving state — it's all there
+**Starting a new session:**
+1. Open the most recent SESSION file (highest date in the filename)
+2. Read the status table — know immediately what's done and what isn't
+3. Copy the "exact next step" instruction and paste it as your first message
+4. Skip re-reading git log, re-running checks, or re-deriving state — it's all there
+
+**During a session:**
+You don't interact with the SESSION file while working. It's read once at the start,
+then set aside. All work happens against tasks.md.
+
+**At the end of a session:**
+A new SESSION file is written after the final commit (enforced by Hook 2 — see section 4).
+It replaces the old one as the "current" handoff document. Old SESSION files are kept
+in the repo as a history of how the project progressed.
+
+---
+
+### Naming convention
+
+```
+SESSION_YYYY-MM-DD_<topic>.md
+```
+
+The date makes it easy to find the latest one. The topic describes what milestone
+was reached — e.g. `groups1-10` (Groups 1–10 done) or `complete` (everything done).
+
+---
 
 ### Files in this repo
 
-| File | Covers |
-|------|--------|
-| `SESSION_2026-07-11_groups1-10.md` | Groups 1–10 complete, handoff to Group 11 |
-| `SESSION_2026-07-11_complete.md` | All groups done, stack verified, OpenSpec archived |
+| File | What it records |
+|------|----------------|
+| `SESSION_2026-07-11_groups1-10.md` | Groups 1–10 complete. Exact handoff instructions for starting Group 11. |
+| `SESSION_2026-07-11_complete.md` | All 11 groups done. Stack verified. OpenSpec archived. Final state of the project. |
+
+---
+
+### Why not just use git log?
+
+Git log tells you *what* changed. SESSION files tell you *where you are* and *what to do next*.
+
+A git log entry like `"fix: Prefect flow_runs filter keys"` tells you a fix was made.
+The SESSION file tells you the fix was verified working, which endpoint it affected,
+what the wrong and right values were, and that the overall stack was healthy after the fix.
+
+They serve different purposes — git log is the audit trail, SESSION files are the
+working memory.
 
 ---
 
