@@ -1,4 +1,4 @@
-# TOI — Commands and Concepts Reference
+# Commands and Concepts Reference
 
 Quick reference for commands and concepts used during this project.
 
