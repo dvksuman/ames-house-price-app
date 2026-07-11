@@ -468,3 +468,21 @@ input_df = input_df[model_col_order]
 ---
 
 *Last updated: 2026-07-11*
+
+---
+
+## LL-10 Hardcoded localhost URLs break inter-container communication
+
+**When**: Group 10 — Containerization
+
+**What happened**: `main.py` hardcoded `PREFECT_API_URL = "http://127.0.0.1:4200/api"` and `MLFLOW_TRACKING_URI = sqlite:///...`. `api_client.py` hardcoded `BASE_URL = "http://localhost:8000"`. Inside Docker, each container's `localhost` is itself — so these URLs would never reach the other services.
+
+**Why**: The code was written for local development where everything runs on the same machine.
+
+**Fix**: Switched all three to `os.environ.get("VAR_NAME", default)`. Docker Compose sets the env vars to use service names (`http://mlflow:5000`, `http://prefect-server:4200/api`, `http://api:8000`). Local default values are preserved so the app still works outside Docker.
+
+**Takeaway**: Any URL pointing to a peer service must come from an env var from day 1. Docker service names are the internal DNS — never hardcode `localhost` in service-to-service calls.
+
+---
+
+*Last updated: 2026-07-11*

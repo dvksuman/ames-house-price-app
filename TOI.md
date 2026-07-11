@@ -295,3 +295,40 @@ curl -s http://127.0.0.1:8000/app-info/eda/charts | python3 -m json.tool | grep 
 # Test EDA summary endpoint
 curl -s http://127.0.0.1:8000/app-info/eda/summary | python3 -m json.tool
 ```
+
+---
+
+## Docker Compose — build and run all services
+
+```bash
+# Build all images and start all 5 services (detached mode)
+docker compose up --build -d
+
+# Watch logs from all services
+docker compose logs -f
+
+# Watch logs from a single service
+docker compose logs -f api
+
+# Check which services are healthy
+docker compose ps
+
+# Stop and remove all containers (keeps volumes/images)
+docker compose down
+
+# Rebuild a single service image without restarting others
+docker compose build api
+
+# Run a one-off command inside a running container
+docker compose exec api python -c "import src.api.main"
+```
+
+## Docker Compose — verify inter-service connectivity
+
+```bash
+# From inside the api container, check that MLflow is reachable by service name
+docker compose exec api python -c "import urllib.request; print(urllib.request.urlopen('http://mlflow:5000/health').read())"
+
+# From inside the streamlit container, check that the FastAPI is reachable
+docker compose exec streamlit python -c "import urllib.request; print(urllib.request.urlopen('http://api:8000/health').read())"
+```

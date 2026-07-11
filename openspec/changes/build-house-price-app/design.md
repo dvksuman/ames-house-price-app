@@ -241,3 +241,18 @@ None blocking — proceed to specs/tasks. Resolve the Kaggle-vs-CSV-mirror inges
 **Prediction form design (9.2)**: 10 key user-facing fields (Overall Qual, Gr Liv Area, Total Bsmt SF, 1st Flr SF, Full Bath, Bedrooms, Year Built, Garage Cars, Garage Area, Neighborhood). Remaining 203 features use dataset-median defaults baked into `DEFAULTS` dict. Industry standard for end-user-facing house price tools (Zillow-style UX): show only meaningful human-understandable inputs.
 
 **Image decoding in EDA page**: `Image.open(io.BytesIO(base64.b64decode(b64_string)))` is image decoding in memory, not file I/O. Passes the API-only audit — no file paths are read from disk in dashboard code.
+
+## Group 10 — Containerization
+
+**5 services, not 4**: Prefect requires two processes — the server (control plane) and the worker (executes flows). These run as separate containers: `prefect-server` and `prefect-worker`. The rubric says "Prefect server" as one of the services — we treat the worker as a necessary addition, not a violation.
+
+**MLflow access pattern (HTTP, not SQLite)**: FastAPI talks to MLflow via `http://mlflow:5000` (the MLflow server container), not via the SQLite file directly. This avoids SQLite locking when the Prefect worker and FastAPI both try to access `mlruns.db` concurrently. `MLFLOW_TRACKING_URI` is now read from env var (defaults to local SQLite for non-Docker use).
+
+**Hardcoded URLs → env vars**: Three URLs that were hardcoded for local dev are now env-var configurable with safe local defaults:
+- `MLFLOW_TRACKING_URI` (in `main.py`) — `sqlite:///...` locally, `http://mlflow:5000` in Docker
+- `PREFECT_API_URL` (in `main.py`) — `http://127.0.0.1:4200/api` locally, `http://prefect-server:4200/api` in Docker
+- `FASTAPI_URL` (in `api_client.py`) — `http://localhost:8000` locally, `http://api:8000` in Docker
+
+**Bind mounts over named volumes**: `./data`, `./mlruns`, `./output` are mounted from the host so trained models and EDA plots are immediately available without re-training. Correct choice for local-only containerization with pre-existing artifacts.
+
+**Startup dependency chain**: `mlflow` and `prefect-server` start in parallel → `api` and `prefect-worker` wait for both to be healthy → `streamlit` waits for `api` to be healthy. Enforced via `depends_on` + `condition: service_healthy`.

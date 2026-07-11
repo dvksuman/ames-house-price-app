@@ -7,8 +7,10 @@ This makes task 9.4 (API-only verification) trivial: just audit this one file.
 # Import the requests library for making HTTP calls.
 import requests
 
-# The base URL of the FastAPI backend — all calls go through this.
-BASE_URL = "http://localhost:8000"
+# Read the FastAPI base URL from the environment — defaults to localhost for non-Docker use;
+# inside Docker Compose this is set to http://api:8000.
+import os
+BASE_URL = os.environ.get("FASTAPI_URL", "http://localhost:8000")
 
 # How long to wait for the API before giving up (in seconds).
 TIMEOUT = 10

@@ -1,0 +1,131 @@
+# docker-compose.yml — wires all 5 services together for local development.
+# Services: mlflow, prefect-server, prefect-worker, api, streamlit.
+# All services that touch the filesystem share three bind-mounted host directories.
+
+services:
+
+  # ── 1. MLflow tracking server ──────────────────────────────────────────────
+  # Serves the MLflow REST API (used by FastAPI + Prefect worker) and the MLflow UI.
+  mlflow:
+    # Use the official MLflow Docker image so we don't need to install it manually.
+    image: ghcr.io/mlflow/mlflow:v2.13.0
+    # Map host port 5000 to container port 5000 so the MLflow UI is reachable in a browser.
+    ports:
+      - "5000:5000"
+    # Mount the host mlruns/ directory so MLflow has access to existing runs and artifacts.
+    volumes:
+      - ./mlruns:/app/mlruns
+      - ./mlruns.db:/app/mlruns.db
+    # Start the MLflow server using the SQLite file as the tracking backend.
+    # --host 0.0.0.0 makes it reachable from other containers and the host machine.
+    command: >
+      mlflow server
+      --backend-store-uri sqlite:////app/mlruns.db
+      --default-artifact-root /app/mlruns
+      --host 0.0.0.0
+      --port 5000
+    # Healthcheck: poll the MLflow health endpoint every 10 seconds.
+    # Other services wait for this to pass before starting.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ── 2. Prefect server ──────────────────────────────────────────────────────
+  # The Prefect control plane: stores flow run history, deployment config, and serves the UI.
+  prefect-server:
+    # Use the same Prefect version already installed in the project.
+    image: prefecthq/prefect:2-latest
+    # Map host port 4200 so the Prefect UI is reachable in a browser.
+    ports:
+      - "4200:4200"
+    # Start the Prefect server, binding to all interfaces.
+    command: prefect server start --host 0.0.0.0 --port 4200
+    # Healthcheck: poll the Prefect API health endpoint.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:4200/api/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    environment:
+      # Tell Prefect server which address it is serving from (needed for self-referencing links).
+      - PREFECT_UI_API_URL=http://localhost:4200/api
+
+  # ── 3. Prefect worker (flow serve) ────────────────────────────────────────
+  # Runs the pipeline_flow.py deployment — executes the 2-minute scheduled pipeline.
+  prefect-worker:
+    # Build from the API Dockerfile since it has all our project dependencies.
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    # Mount all three data directories so the pipeline can read/write data and log to MLflow.
+    volumes:
+      - ./data:/app/data
+      - ./mlruns:/app/mlruns
+      - ./output:/app/output
+    # Tell the pipeline where to find Prefect and MLflow.
+    environment:
+      - PREFECT_API_URL=http://prefect-server:4200/api
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    # Run the pipeline flow module — this calls .serve() which registers the deployment
+    # and waits for scheduled runs indefinitely.
+    command: python -m src.ops.pipeline_flow
+    # Wait for both the Prefect server and MLflow to be healthy before starting.
+    depends_on:
+      prefect-server:
+        condition: service_healthy
+      mlflow:
+        condition: service_healthy
+
+  # ── 4. FastAPI service ────────────────────────────────────────────────────
+  # Serves the prediction and app-info REST API endpoints.
+  api:
+    # Build the FastAPI image from Dockerfile.api.
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    # Map host port 8000 to container port 8000 so curl/Swagger are reachable from the host.
+    ports:
+      - "8000:8000"
+    # Mount data/ and output/ so FastAPI can serve pre-generated EDA plots and load model files.
+    volumes:
+      - ./data:/app/data
+      - ./output:/app/output
+    # Point FastAPI to the containerised MLflow and Prefect services by service name.
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - PREFECT_API_URL=http://prefect-server:4200/api
+    # Wait for MLflow and Prefect to be healthy before starting FastAPI.
+    depends_on:
+      mlflow:
+        condition: service_healthy
+      prefect-server:
+        condition: service_healthy
+    # Healthcheck: call our own /health endpoint.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ── 5. Streamlit dashboard ────────────────────────────────────────────────
+  # The browser-facing dashboard — talks only to the FastAPI service, never directly to data.
+  streamlit:
+    # Build the Streamlit image from Dockerfile.streamlit.
+    build:
+      context: .
+      dockerfile: Dockerfile.streamlit
+    # Map host port 8501 so the browser can open the dashboard.
+    ports:
+      - "8501:8501"
+    # Tell Streamlit where the FastAPI backend lives (service name resolves inside Docker network).
+    environment:
+      - FASTAPI_URL=http://api:8000
+    # Wait for the API to be healthy before starting the dashboard.
+    depends_on:
+      api:
+        condition: service_healthy

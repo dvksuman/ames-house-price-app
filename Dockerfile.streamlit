@@ -1,0 +1,31 @@
+# Use the same base image as the API service so the pip install layer can be cached similarly.
+FROM python:3.11-slim
+
+# Set /app as the working directory inside the container.
+WORKDIR /app
+
+# Copy requirements first to take advantage of Docker's layer caching for pip installs.
+COPY requirements.txt .
+
+# Install all dependencies — Streamlit and its dependencies are included here.
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the entire src/ directory — the dashboard imports from src/dashboard/ and src/utils.py.
+COPY src/ src/
+
+# Tell Python where to find the src package so imports like "from src.dashboard..." work.
+ENV PYTHONPATH=/app
+
+# Suppress .pyc files inside the container (not needed at runtime).
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Force stdout/stderr to be unbuffered so Streamlit logs appear in docker logs immediately.
+ENV PYTHONUNBUFFERED=1
+
+# Expose port 8501, which is Streamlit's default port.
+EXPOSE 8501
+
+# Start the Streamlit app, binding to all interfaces so the host browser can reach it.
+# --server.headless=true disables the "want to sign up?" prompt that Streamlit shows on first run.
+CMD ["python", "-m", "streamlit", "run", "src/dashboard/app.py",
+     "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]

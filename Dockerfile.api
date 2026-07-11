@@ -1,0 +1,31 @@
+# Use the official slim Python 3.11 image as the base — "slim" skips dev tools to keep the image small.
+FROM python:3.11-slim
+
+# Set /app as the working directory inside the container — all subsequent paths are relative to this.
+WORKDIR /app
+
+# Copy only the requirements file first so Docker can cache the pip install layer.
+# If requirements.txt hasn't changed, Docker reuses this cached layer on rebuilds.
+COPY requirements.txt .
+
+# Install all Python dependencies listed in requirements.txt.
+# --no-cache-dir prevents pip from storing a download cache inside the image (keeps it smaller).
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the entire src/ directory into the container so all application code is available.
+COPY src/ src/
+
+# Tell Python to look in /app when importing modules — without this, "import src.api.main" would fail.
+ENV PYTHONPATH=/app
+
+# Tell Python not to write .pyc bytecode files to disk (not needed in containers).
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Tell Python not to buffer stdout/stderr — ensures log lines appear in docker logs immediately.
+ENV PYTHONUNBUFFERED=1
+
+# Expose port 8000 so Docker knows the container listens here (used by Compose for port mapping).
+EXPOSE 8000
+
+# Start the FastAPI server, binding to all network interfaces (0.0.0.0) so other containers can reach it.
+CMD ["python", "-m", "uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

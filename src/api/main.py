@@ -33,8 +33,11 @@ from typing import Optional, Any            # for optional fields in the input s
 # regardless of which directory uvicorn is started from.
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-# The MLflow tracking URI pointing to our local SQLite database file.
-MLFLOW_TRACKING_URI = f"sqlite:///{PROJECT_ROOT}/mlruns.db"
+# Read the MLflow tracking URI from the environment — defaults to local SQLite so the
+# app still works outside Docker; inside Docker Compose this is set to http://mlflow:5000.
+MLFLOW_TRACKING_URI = os.environ.get(
+    "MLFLOW_TRACKING_URI", f"sqlite:///{PROJECT_ROOT}/mlruns.db"
+)
 
 # The name under which the best model is registered in the MLflow Model Registry.
 MODEL_NAME = "AmesPricePredictor"
@@ -48,8 +51,9 @@ MODEL_ALIAS = "production"
 # The full MLflow URI used to load the model — alias-based loading.
 MODEL_URI = f"models:/{MODEL_NAME}@{MODEL_ALIAS}"
 
-# The base URL for the locally running Prefect server REST API.
-PREFECT_API_URL = "http://127.0.0.1:4200/api"
+# Read the Prefect API URL from the environment — defaults to localhost for non-Docker use;
+# inside Docker Compose this is set to http://prefect-server:4200/api.
+PREFECT_API_URL = os.environ.get("PREFECT_API_URL", "http://127.0.0.1:4200/api")
 
 
 # --- 8.1a: Request schema — one field per encoded feature (213 total) ---
