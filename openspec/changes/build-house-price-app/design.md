@@ -223,3 +223,11 @@ None blocking — proceed to specs/tasks. Resolve the Kaggle-vs-CSV-mirror inges
 **Path parameter consistency (8.5, 8.6, 8.7)**: Added `{model_name}` to `/app-info/experiment` and `{deployment_name}` to `/app-info/pipeline` and `/app-info/runs`. Rationale: consistent REST design — the path should identify the specific resource being queried. Original spec had no parameters; updated tasks.md to reflect this decision.
 
 **503 graceful degradation (8.8)**: Applied only to `/app-info/*` endpoints, not `/predict`. Reason: `/predict` uses the model already loaded in memory at startup — MLflow going down after startup does not affect predictions. Each `/app-info/*` endpoint wraps its external call in try/except and raises `HTTPException(status_code=503)` with a message identifying which service is unreachable.
+
+**Bug fix — SalePrice data leakage**: `train_mlflow.py` originally dropped only `LogSalePrice` from features. `SalePrice` and `is_test` remained, causing XGBoost to cheat (R²=0.994). Fixed by dropping all three columns before training. Model re-registered as version 2 (R²=0.929 — legitimate).
+
+**Bug fix — XGBoost column order**: Input DataFrame must have columns reordered to match the exact training order before calling `model.predict()`. Fixed by reading `model._model_impl.xgb_model.get_booster().feature_names` and reindexing the DataFrame.
+
+**Bug fix — Prefect deployments API**: Prefect 3.x does not support `GET /api/deployments`. The correct endpoint is `POST /api/deployments/filter` with a JSON filter body. All Prefect listing calls use POST.
+
+**MLflow experiment name vs model name**: Experiment name is `ames-housing-price-prediction` (set in train_mlflow.py); registered model name is `AmesPricePredictor`. These are independent — stored as separate constants in main.py.
