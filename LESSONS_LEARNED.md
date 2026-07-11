@@ -442,3 +442,29 @@ input_df = input_df[model_col_order]
 ---
 
 *Last updated: 2026-07-11*
+
+## LL-13 — Port already in use when starting FastAPI
+
+**When**: Group 9 (Dashboard), 2026-07-11
+
+**What happened**: `uvicorn` failed with `[Errno 48] address already in use` on port 8000. A previous uvicorn process (PID 16981) was still running in the background.
+
+**Fix**: `lsof -i :8000` to find the PID, then `kill <PID>`, then restart uvicorn.
+
+**Takeaway**: Always check `lsof -i :<port>` before starting a server. On Mac, port conflicts show `[Errno 48]` not `[Errno 98]` (Linux).
+
+---
+
+## LL-14 — EDA plots were in output/plots/, not output/eda/
+
+**When**: Group 9 (Dashboard), 2026-07-11
+
+**What happened**: The EDA FastAPI endpoint was initially coded to read from `output/eda/`. The actual path written by the EDA pipeline is `output/plots/`.
+
+**Fix**: Updated `EDA_PLOTS_DIR` in `main.py` to point to `output/plots/`.
+
+**Takeaway**: Always verify actual output paths with `ls output/` before hardcoding them in a new endpoint. Don't assume the path from memory.
+
+---
+
+*Last updated: 2026-07-11*

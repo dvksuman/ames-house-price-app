@@ -265,3 +265,33 @@ curl -s -X POST http://127.0.0.1:4200/api/deployments/filter \
   -H "Content-Type: application/json" \
   -d '{}' | python3 -m json.tool | grep '"name"'
 ```
+
+## Streamlit
+
+```bash
+# Start the Streamlit dashboard
+.venv/bin/streamlit run src/dashboard/app.py --server.port 8501
+
+# Install Streamlit and Pillow into the project venv
+.venv/bin/pip install streamlit pillow
+```
+
+## Port / Process Management
+
+```bash
+# Find what process is using a port (Mac)
+lsof -i :8000
+
+# Kill a process by PID
+kill <PID>
+```
+
+## FastAPI — test new EDA endpoints
+
+```bash
+# Test EDA charts endpoint (returns base64-encoded PNG dict)
+curl -s http://127.0.0.1:8000/app-info/eda/charts | python3 -m json.tool | grep -o '"[a-z_]*":' 
+
+# Test EDA summary endpoint
+curl -s http://127.0.0.1:8000/app-info/eda/summary | python3 -m json.tool
+```
