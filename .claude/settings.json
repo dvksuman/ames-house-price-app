@@ -12,6 +12,18 @@
         ]
       }
     ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /Users/dvksuman/API/.claude/hooks/post_commit_check.py",
+            "statusMessage": "Checking SESSION file after commit..."
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
