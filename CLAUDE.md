@@ -72,6 +72,24 @@ starting the next task. Do not skip any step, even if it seems unnecessary.
 6. **Update design.md** — record any design decision or clarification made during the task
 7. **Git commit** — create a checkpoint commit before moving to the next group
 
+## Integration verification — mandatory before starting a new group
+
+Before implementing any new task group that consumes outputs from a previous group,
+run all preceding scripts in sequence and verify the full file-handoff chain works:
+
+1. **Run the chain** — execute each script in order (ingest → preprocess → eda → …)
+2. **Check exit codes** — every script must exit cleanly with no exceptions
+3. **Verify output files exist** — confirm each expected file was written to the correct path
+4. **Check row/column counts** — ensure the dataset shape is correct at each stage
+5. **Spot-check for nulls** — verify no unexpected NaN values crept in through the handoff
+
+Do NOT start a new group until this check passes. If any step fails, fix the integration
+bug first, commit the fix, then proceed.
+
+This rule exists because pipeline bugs caught early (before Prefect schedules them every
+2 minutes, or before Docker Compose runs them at startup) cost 30 seconds to fix.
+Caught late, they cost hours of debugging across multiple services.
+
 ## No cheating, no shortcuts, always ask when in doubt
 
 - **No cheating**: Never fake, mock, hardcode, or fabricate data, outputs, or results.

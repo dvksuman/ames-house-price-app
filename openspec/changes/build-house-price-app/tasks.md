@@ -31,6 +31,10 @@
 - [x] 4.6 Generate bivariate plot (top feature vs. SalePrice scatter) and save as image artifact
 - [x] 4.7 Generate correlation heatmap and save as image artifact
 
+## 4b. Integration Verification (Groups 2–4)
+
+- [x] 4b.1 Run ingest → preprocess → eda in sequence; verify zero nulls in encoded dataset and all output files present (found and fixed Fence ordinal map key mismatch: MnWw not MnWo)
+
 ## 5. DataOps: Scheduled Pipeline (Prefect)
 
 - [ ] 5.1 Wrap ingestion + preprocessing + EDA steps (2 and 3 and 4) as Prefect tasks within a single flow

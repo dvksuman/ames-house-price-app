@@ -270,4 +270,18 @@ with open("data/raw/ames_housing.csv", "wb") as f:
 
 ---
 
+## LL-11: Ordinal map key mismatch causes silent NaN in encoded dataset
+
+**When**: Integration check between Group 3 (preprocessing) and Group 4 (EDA encoding).
+
+**What happened**: The encoded dataset had 12 NaN values in the `Fence` column after ordinal encoding, even though the processed dataset had 0 nulls.
+
+**Why it happened**: Our `OTHER_ORDINAL` map for `Fence` used the key `"MnWo"` (Minimum Wood — taken from De Cock's data dictionary). But the actual data contains `"MnWw"` (Minimum Wire). When `pd.Series.map()` encounters a value not in the mapping dict, it returns NaN silently — no warning or error.
+
+**Fix**: Replaced `"MnWo": 1` with `"MnWw": 1` in the Fence mapping in `src/eda/eda.py`.
+
+**Takeaway**: After any ordinal encoding step, always check `df.isnull().sum()` on the output. A value in the data that doesn't appear in your mapping map becomes NaN silently. When ordinal maps are hand-written from a data dictionary, verify actual unique values in the data first — the dictionary and the data can disagree.
+
+---
+
 *Last updated: 2026-07-10*

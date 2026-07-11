@@ -64,8 +64,9 @@ OTHER_ORDINAL = {
     "BsmtFin Type 2": {"GLQ": 6, "ALQ": 5, "BLQ": 4, "Rec": 3, "LwQ": 2, "Unf": 1, "None": 0},
     # Garage interior finish: Finished > Rough Finished > Unfinished > None
     "Garage Finish":  {"Fin": 3, "RFn": 2, "Unf": 1, "None": 0},
-    # Fence quality: Good Privacy > Minimum Privacy > Good Wood > Minimum Wood > None
-    "Fence":          {"GdPrv": 4, "MnPrv": 3, "GdWo": 2, "MnWo": 1, "None": 0},
+    # Fence quality: Good Privacy > Minimum Privacy > Good Wood > Minimum Wire > None
+    # MnWw (Minimum Wire) is the actual code in the data — De Cock's dict says MnWo but data has MnWw
+    "Fence":          {"GdPrv": 4, "MnPrv": 3, "GdWo": 2, "MnWw": 1, "None": 0},
     # Lot shape regularity: Regular is best, Irregular 3 is worst
     "Lot Shape":      {"Reg": 4, "IR1": 3, "IR2": 2, "IR3": 1},
     # Land slope: Gentle > Moderate > Severe
