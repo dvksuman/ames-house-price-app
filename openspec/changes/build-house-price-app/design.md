@@ -231,3 +231,13 @@ None blocking — proceed to specs/tasks. Resolve the Kaggle-vs-CSV-mirror inges
 **Bug fix — Prefect deployments API**: Prefect 3.x does not support `GET /api/deployments`. The correct endpoint is `POST /api/deployments/filter` with a JSON filter body. All Prefect listing calls use POST.
 
 **MLflow experiment name vs model name**: Experiment name is `ames-housing-price-prediction` (set in train_mlflow.py); registered model name is `AmesPricePredictor`. These are independent — stored as separate constants in main.py.
+
+## Group 9 — Dashboard (Streamlit)
+
+**EDA endpoint (8.10)**: Added `GET /app-info/eda/charts` and `GET /app-info/eda/summary` to FastAPI. Charts are read from `output/plots/*.png`, base64-encoded, and returned as JSON. Summary stats are read from `output/summary_stats.csv` and `output/correlation_top.csv`. Returns 503 if files don't exist yet (pipeline hasn't run). This keeps the dashboard purely API-driven.
+
+**Dashboard file structure (9.1–9.4)**: `src/dashboard/app.py` (entry point + sidebar nav), `src/dashboard/api_client.py` (all HTTP calls centralised here), `src/dashboard/pages/eda.py`, `prediction.py`, `app_details.py`. All `requests` calls live only in `api_client.py` — makes the API-only requirement trivially auditable.
+
+**Prediction form design (9.2)**: 10 key user-facing fields (Overall Qual, Gr Liv Area, Total Bsmt SF, 1st Flr SF, Full Bath, Bedrooms, Year Built, Garage Cars, Garage Area, Neighborhood). Remaining 203 features use dataset-median defaults baked into `DEFAULTS` dict. Industry standard for end-user-facing house price tools (Zillow-style UX): show only meaningful human-understandable inputs.
+
+**Image decoding in EDA page**: `Image.open(io.BytesIO(base64.b64decode(b64_string)))` is image decoding in memory, not file I/O. Passes the API-only audit — no file paths are read from disk in dashboard code.

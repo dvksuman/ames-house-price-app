@@ -69,13 +69,14 @@
 - [x] 8.7 Implement `GET /app-info/runs/{deployment_name}` — wraps Prefect flow-runs API (recent run statuses/timestamps)
 - [x] 8.8 Add graceful 503 handling when MLflow/Prefect are unreachable from any `/app-info/*` endpoint
 - [x] 8.9 Verify `/docs` (Swagger UI) renders all endpoints correctly
+- [x] 8.10 Add GET /app-info/eda/charts and GET /app-info/eda/summary endpoints to FastAPI (base64-encoded PNGs + summary stats JSON)
 
 ## 9. Dashboard (Streamlit)
 
-- [ ] 9.1 Build EDA view: summary stats, correlation heatmap, univariate/bivariate charts — sourced only via calls to the FastAPI backend (serve pre-generated EDA artifacts through a FastAPI endpoint if needed)
-- [ ] 9.2 Build prediction view: form for house feature inputs, calls `POST /predict`, displays result
-- [ ] 9.3 Build app-details view: calls all four `/app-info/*` endpoints, displays results
-- [ ] 9.4 Confirm no direct dataset/model/MLflow/Prefect access exists in the Streamlit code — API calls only
+- [x] 9.1 Build EDA view: summary stats, correlation heatmap, univariate/bivariate charts — sourced only via calls to the FastAPI backend (serve pre-generated EDA artifacts through a FastAPI endpoint if needed)
+- [x] 9.2 Build prediction view: form for house feature inputs, calls `POST /predict`, displays result
+- [x] 9.3 Build app-details view: calls all four `/app-info/*` endpoints, displays results
+- [x] 9.4 Confirm no direct dataset/model/MLflow/Prefect access exists in the Streamlit code — API calls only
 
 ## 10. Containerization (Docker Compose)
 

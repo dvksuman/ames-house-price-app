@@ -9,6 +9,8 @@ Endpoints: POST /predict, GET /health, GET /app-info/model,
 
 # --- Standard library ---
 import os                          # for building file paths
+import base64                      # for encoding PNG images as text for JSON transport
+from pathlib import Path           # for easy file path handling
 from contextlib import asynccontextmanager  # for startup/shutdown lifecycle
 
 # --- Third-party ---
@@ -742,6 +744,81 @@ def app_info_pipeline(deployment_name: str):
         raise
     except Exception as e:
         raise HTTPException(status_code=503, detail={"service": "prefect", "error": str(e)})
+
+
+# ==============================================================================
+# TASK 8.10 — GET /app-info/eda/charts  and  GET /app-info/eda/summary
+# Returns pre-generated EDA artifacts so the dashboard never touches the dataset.
+# ==============================================================================
+
+# Folder where the EDA pipeline writes its output charts and CSV files.
+EDA_PLOTS_DIR = Path(PROJECT_ROOT) / "output" / "plots"
+EDA_OUTPUT_DIR = Path(PROJECT_ROOT) / "output"
+
+
+@app.get("/app-info/eda/charts")
+def eda_charts():
+    # Check that the plots folder exists — it won't if the EDA pipeline hasn't run yet.
+    if not EDA_PLOTS_DIR.exists():
+        raise HTTPException(status_code=503, detail="EDA charts not yet generated. Run the pipeline first.")
+
+    # Build a dictionary mapping chart name → base64-encoded PNG string.
+    charts = {}
+
+    # Loop through every PNG file in the plots directory.
+    for png_file in sorted(EDA_PLOTS_DIR.glob("*.png")):
+        # Read the raw bytes of the image file.
+        image_bytes = png_file.read_bytes()
+
+        # Convert the raw bytes to a text string using base64 encoding.
+        # This lets us send binary image data inside a JSON response.
+        charts[png_file.stem] = base64.b64encode(image_bytes).decode("utf-8")
+
+    # If the folder was empty, return a helpful error.
+    if not charts:
+        raise HTTPException(status_code=503, detail="No PNG charts found in output/plots/. Run the pipeline first.")
+
+    # Return the dictionary of chart_name → base64_string.
+    return charts
+
+
+@app.get("/app-info/eda/summary")
+def eda_summary():
+    # Path to the summary statistics CSV written by the EDA pipeline.
+    summary_csv = EDA_OUTPUT_DIR / "summary_stats.csv"
+    correlation_csv = EDA_OUTPUT_DIR / "correlation_top.csv"
+
+    # Return an error if the file doesn't exist yet.
+    if not summary_csv.exists():
+        raise HTTPException(status_code=503, detail="summary_stats.csv not found. Run the pipeline first.")
+
+    # Read the summary CSV into a pandas DataFrame.
+    import pandas as pd
+    summary_df = pd.read_csv(summary_csv, index_col=0)
+
+    # Keep only a few key numeric columns to avoid sending too much data.
+    key_cols = ["Overall Qual", "Gr Liv Area", "Total Bsmt SF", "Year Built",
+                "Garage Cars", "Garage Area", "SalePrice"]
+
+    # Filter to only the columns that exist in the summary (some may be absent).
+    available_cols = [c for c in key_cols if c in summary_df.columns]
+    summary_subset = summary_df[available_cols]
+
+    # Round all values to 2 decimal places to keep the JSON readable.
+    summary_dict = summary_subset.round(2).to_dict()
+
+    # Also load the top-correlated features if available.
+    correlation = {}
+    if correlation_csv.exists():
+        corr_df = pd.read_csv(correlation_csv, index_col=0)
+        # Return top 10 correlations as a simple dict of {feature: correlation_value}.
+        correlation = corr_df["correlation"].head(10).round(4).to_dict()
+
+    # Return both the summary stats and the top correlations.
+    return {
+        "summary_stats": summary_dict,
+        "top_correlations_with_saleprice": correlation,
+    }
 
 
 # ==============================================================================
