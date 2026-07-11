@@ -27,5 +27,4 @@ EXPOSE 8501
 
 # Start the Streamlit app, binding to all interfaces so the host browser can reach it.
 # --server.headless=true disables the "want to sign up?" prompt that Streamlit shows on first run.
-CMD ["python", "-m", "streamlit", "run", "src/dashboard/app.py",
-     "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]
+CMD ["python", "-m", "streamlit", "run", "src/dashboard/app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.headless=true"]
