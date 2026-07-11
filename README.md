@@ -51,9 +51,9 @@ Three models trained on the Ames Housing dataset (70/30 split):
 
 | Model | R² | RMSE ($) | MAPE (%) |
 |-------|----|----------|----------|
-| Ridge Regression | 0.8523 | — | — |
-| Lasso Regression | 0.9026 | — | — |
-| XGBoost | 0.9285 | — | — |
+| Ridge Regression | 0.8523 | 34,008 | 8.48% |
+| Lasso Regression | 0.9026 | 30,068 | 8.35% |
+| XGBoost | 0.9285 | 23,407 | 7.62% |
 
 Best model (XGBoost) registered in MLflow Model Registry with alias `production`.
 
