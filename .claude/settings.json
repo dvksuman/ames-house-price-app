@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /Users/dvksuman/API/.claude/hooks/post_task_check.sh",
+            "statusMessage": "Checking post-task checklist..."
+          }
+        ]
+      }
+    ]
+  }
+}

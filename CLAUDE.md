@@ -72,6 +72,30 @@ starting the next task. Do not skip any step, even if it seems unnecessary.
 6. **Update design.md** — record any design decision or clarification made during the task
 7. **Git commit** — create a checkpoint commit before moving to the next group
 
+## Session checkpoint — suggested at group boundaries
+
+After completing each group (and before starting the next), create a checkpoint file:
+
+```
+SESSION_YYYY-MM-DD_<topic>.md  (in project root)
+```
+
+Include: tasks completed, last git commit hash, key output files + shapes, any bugs fixed,
+and the exact next step (group + task numbers). This file is the handoff brief for the next
+session — read it first, skip re-deriving state from git log or conversation history.
+
+**When to create:** After every group commit, or any time context is approaching compression
+(long session, many tool calls). If the session ends without a checkpoint, the next session
+starts cold.
+
+**This is a suggestion, not a hard gate** — but skipping it means the next session wastes
+time re-establishing state that could have been written in 2 minutes.
+
+**Reminder rule:** At the end of any group commit, or when the user says they want to stop,
+Claude must say:
+> "To continue next time: `/clear` or open a new session, then paste:
+> 'Read `SESSION_YYYY-MM-DD_<topic>.md` and continue with Group N. Run `/opsx:explore` first.'"
+
 ## Integration verification — mandatory before starting a new group
 
 Before implementing any new task group that consumes outputs from a previous group,
