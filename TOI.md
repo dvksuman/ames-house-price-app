@@ -225,4 +225,43 @@ curl -s http://localhost:5000/api/2.0/mlflow/registered-models/list | python3 -m
 
 # Load registered model by alias (for use in FastAPI Group 8)
 # model_uri = "models:/AmesPricePredictor@production"
+
+## Group 8 — FastAPI
+
+```bash
+# Start FastAPI server
+cd /Users/dvksuman/API
+.venv/bin/uvicorn src.api.main:app --port 8000
+
+# Test health endpoint
+curl -s http://127.0.0.1:8000/health | python3 -m json.tool
+
+# Test predict endpoint (with a full 213-feature JSON payload)
+curl -s -X POST http://127.0.0.1:8000/predict \
+  -H "Content-Type: application/json" \
+  -d @/tmp/sample_row.json | python3 -m json.tool
+
+# View all endpoints in Swagger UI
+open http://127.0.0.1:8000/docs
+
+# Test app-info endpoints
+curl -s http://127.0.0.1:8000/app-info/model | python3 -m json.tool
+curl -s http://127.0.0.1:8000/app-info/experiment/xgboost | python3 -m json.tool
+curl -s http://127.0.0.1:8000/app-info/experiment/ridge | python3 -m json.tool
+curl -s http://127.0.0.1:8000/app-info/experiment/lasso | python3 -m json.tool
+curl -s http://127.0.0.1:8000/app-info/pipeline/ames-housing-2min | python3 -m json.tool
+curl -s http://127.0.0.1:8000/app-info/runs/ames-housing-2min | python3 -m json.tool
+
+# Check XGBoost model feature names (to debug column mismatch)
+.venv/bin/python3 -c "
+import mlflow
+mlflow.set_tracking_uri('sqlite:///mlruns.db')
+m = mlflow.pyfunc.load_model('models:/AmesPricePredictor@production')
+print(m._model_impl.xgb_model.get_booster().feature_names[:10])
+"
+
+# List Prefect deployments via REST API
+curl -s -X POST http://127.0.0.1:4200/api/deployments/filter \
+  -H "Content-Type: application/json" \
+  -d '{}' | python3 -m json.tool | grep '"name"'
 ```

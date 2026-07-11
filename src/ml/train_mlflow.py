@@ -68,8 +68,11 @@ bool_cols = df.select_dtypes(include="bool").columns.tolist()
 df[bool_cols] = df[bool_cols].astype(int)
 
 # Separate features from the log-transformed target.
+# Drop both LogSalePrice (the target) and SalePrice (the raw target) and is_test
+# so neither leaks into the model as a feature.
 TARGET = "LogSalePrice"
-X = df.drop(columns=[TARGET])   # all input columns
+DROP_COLS = [c for c in [TARGET, "SalePrice", "is_test"] if c in df.columns]
+X = df.drop(columns=DROP_COLS)  # all input columns except targets
 y = df[TARGET]                  # log(SalePrice) — what we're predicting
 
 # 70/30 split with a fixed seed so every run gives identical train/test rows.

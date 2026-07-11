@@ -205,3 +205,21 @@ None blocking — proceed to specs/tasks. Resolve the Kaggle-vs-CSV-mirror inges
 **Feature importance artifact**: `output/feature_importance.csv` (from Group 6) logged as an extra artifact on the XGBoost run for richer run detail in the UI.
 
 **Registered model name**: `AmesPricePredictor` — this is the name Group 8 (FastAPI) will use to load the model at startup.
+
+## Group 8 — API Layer Design Decisions
+
+**Input schema (8.1)**: Accept all 213 encoded features as optional fields with default 0.0. Rationale: the model was trained on fully encoded data with no missing values; accepting partial input with invented defaults would silently degrade prediction accuracy. For an assignment demo, callers are expected to send a full row from the encoded dataset. All 213 fields declared as `Optional[float] = 0.0` in the Pydantic request model.
+
+**Model loading strategy (8.2)**: Load `models:/AmesPricePredictor@production` once at app startup using FastAPI's lifespan context manager, store in `app.state.model`. Not per-request — loading per request adds 1-2s latency and is unnecessary since the model is static. If the model cannot be loaded at startup the app refuses to start, which is the correct behaviour (no point serving /predict with no model).
+
+**Output transformation (8.2)**: The XGBoost model was trained on `LogSalePrice` (log-transformed target). The `/predict` response must apply `np.exp()` to the raw model output to return a dollar-scale price.
+
+**Health check design (8.3)**: Two independent checks — (1) MLflow: query `MlflowClient` for the registered model (SQLite file read, no network); (2) Prefect: HTTP GET to `http://127.0.0.1:4200/api/health`. The `/health` endpoint never returns 5xx — always 200 with per-service status fields. Returns `"overall": "degraded"` if either service is down but the model is loaded.
+
+**MLflow app-info (8.4, 8.5)**: Use `MlflowClient` Python API (direct SQLite reads), not HTTP calls to an MLflow REST server. No separate MLflow server process needed. Simpler and more reliable for a local SQLite setup.
+
+**Prefect app-info (8.6, 8.7)**: Use HTTP calls to Prefect REST API at `http://127.0.0.1:4200/api`. Prefect is always a separate server process; no Python client shortcut available.
+
+**Path parameter consistency (8.5, 8.6, 8.7)**: Added `{model_name}` to `/app-info/experiment` and `{deployment_name}` to `/app-info/pipeline` and `/app-info/runs`. Rationale: consistent REST design — the path should identify the specific resource being queried. Original spec had no parameters; updated tasks.md to reflect this decision.
+
+**503 graceful degradation (8.8)**: Applied only to `/app-info/*` endpoints, not `/predict`. Reason: `/predict` uses the model already loaded in memory at startup — MLflow going down after startup does not affect predictions. Each `/app-info/*` endpoint wraps its external call in try/except and raises `HTTPException(status_code=503)` with a message identifying which service is unreachable.

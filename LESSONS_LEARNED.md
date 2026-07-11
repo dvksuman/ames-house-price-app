@@ -371,4 +371,74 @@ PREFECT_API_URL=http://127.0.0.1:4200/api python -m src.ops.pipeline_flow
 
 ---
 
+---
+
+## LL-08 — SalePrice data leakage in XGBoost training
+
+**When**: Group 8 (API Layer), 2026-07-11
+
+**What happened**: The MLflow training script (`train_mlflow.py`) dropped only `LogSalePrice` from the feature set but left `SalePrice` in. XGBoost trained on `SalePrice` as a feature (with R²=0.994 — suspiciously perfect). When `/predict` was called without `SalePrice` in the payload, XGBoost raised `ValueError: feature_names mismatch`.
+
+**Why it happened**: `X = df.drop(columns=[TARGET])` only dropped `LogSalePrice`. `SalePrice` and `is_test` were still present.
+
+**Fix**: Changed the drop to `DROP_COLS = [c for c in [TARGET, "SalePrice", "is_test"] if c in df.columns]`. Re-ran training — model version 2 now uses 213 legitimate features. Real R² is 0.929 (not 0.994).
+
+**Takeaway**: Always check what columns are in `X` after the drop — print `X.columns.tolist()` or assert `"SalePrice" not in X.columns` before fitting any model.
+
+---
+
+## LL-09 — XGBoost feature column order mismatch
+
+**When**: Group 8 (API Layer), 2026-07-11
+
+**What happened**: Even after fixing the leakage, `/predict` still failed. The DataFrame built from the Pydantic payload had columns in alphabetical (Pydantic field declaration) order, not the order the model was trained on.
+
+**Why it happened**: XGBoost validates feature names AND order. A different column order raises `ValueError: feature_names mismatch`.
+
+**Fix**: Reorder the input DataFrame before calling `model.predict()`:
+```python
+model_col_order = model._model_impl.xgb_model.get_booster().feature_names
+input_df = input_df[model_col_order]
+```
+
+**Takeaway**: Always reorder input columns to match training order when serving XGBoost via MLflow pyfunc.
+
+---
+
+## LL-10 — Pydantic response model version field type mismatch
+
+**When**: Group 8 (API Layer), 2026-07-11
+
+**What happened**: `/predict` returned HTTP 500 with `pydantic_core.ValidationError`. The `PredictResponse.model_version` field was declared `str` but `mv.version` from MLflow is an integer.
+
+**Fix**: Cast to string at assignment: `app.state.model_version = str(mv.version)`.
+
+**Takeaway**: MLflow's `model_version.version` is an int. Always cast to `str` when storing for use in a Pydantic `str` field.
+
+---
+
+## LL-11 — Prefect REST API endpoint for listing deployments
+
+**When**: Group 8 (API Layer), 2026-07-11
+
+**What happened**: `GET /api/deployments` returned 307 redirect to `/api/deployments/`, which then returned 405 Method Not Allowed. The correct Prefect 3.x endpoint for listing deployments is `POST /api/deployments/filter` with a JSON filter body.
+
+**Fix**: Changed from `httpx.get(".../deployments")` to `httpx.post(".../deployments/filter", json={...})`.
+
+**Takeaway**: Prefect 3.x REST API uses POST + filter body for collection queries (deployments, flow-runs, flows). Never assume GET for listing; check the Prefect API docs or test with curl first.
+
+---
+
+## LL-12 — MLflow experiment name differs from registered model name
+
+**When**: Group 8 (API Layer), 2026-07-11
+
+**What happened**: `client.get_experiment_by_name("AmesPricePredictor")` returned `None`. The experiment was registered as `ames-housing-price-prediction` (set in `train_mlflow.py`), which is different from the registered model name `AmesPricePredictor`.
+
+**Fix**: Added a separate constant `EXPERIMENT_NAME = "ames-housing-price-prediction"` and used it in the experiment lookup.
+
+**Takeaway**: MLflow experiment name and registered model name are independent. Always look up the actual experiment name with `client.search_experiments()` before hardcoding it in API code.
+
+---
+
 *Last updated: 2026-07-11*

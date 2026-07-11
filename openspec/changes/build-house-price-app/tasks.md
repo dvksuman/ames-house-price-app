@@ -60,15 +60,15 @@
 
 ## 8. API Layer (FastAPI)
 
-- [ ] 8.1 Define Pydantic request/response schemas for the prediction endpoint (house features in, predicted price + model version out)
-- [ ] 8.2 Implement `POST /predict` — loads the registered model from MLflow Model Registry, returns prediction
-- [ ] 8.3 Implement `GET /health` — checks MLflow and Prefect reachability, returns status
-- [ ] 8.4 Implement `GET /app-info/model` — wraps MLflow Model Registry API (name, version, stage)
-- [ ] 8.5 Implement `GET /app-info/experiment` — wraps MLflow Tracking API (experiment name, ID, latest run summary)
-- [ ] 8.6 Implement `GET /app-info/pipeline` — wraps Prefect deployments API (deployment name, schedule, flow name)
-- [ ] 8.7 Implement `GET /app-info/runs` — wraps Prefect flow-runs API (recent run statuses/timestamps)
-- [ ] 8.8 Add graceful 503 handling when MLflow/Prefect are unreachable from any `/app-info/*` endpoint
-- [ ] 8.9 Verify `/docs` (Swagger UI) renders all endpoints correctly
+- [x] 8.1 Define Pydantic request/response schemas for the prediction endpoint (house features in, predicted price + model version out)
+- [x] 8.2 Implement `POST /predict` — loads the registered model from MLflow Model Registry, returns prediction
+- [x] 8.3 Implement `GET /health` — checks MLflow and Prefect reachability, returns status
+- [x] 8.4 Implement `GET /app-info/model` — wraps MLflow Model Registry API (name, version, stage)
+- [x] 8.5 Implement `GET /app-info/experiment/{model_name}` — wraps MLflow Tracking API (experiment name, ID, run summary for the specified model)
+- [x] 8.6 Implement `GET /app-info/pipeline/{deployment_name}` — wraps Prefect deployments API (deployment name, schedule, flow name)
+- [x] 8.7 Implement `GET /app-info/runs/{deployment_name}` — wraps Prefect flow-runs API (recent run statuses/timestamps)
+- [x] 8.8 Add graceful 503 handling when MLflow/Prefect are unreachable from any `/app-info/*` endpoint
+- [x] 8.9 Verify `/docs` (Swagger UI) renders all endpoints correctly
 
 ## 9. Dashboard (Streamlit)
 
