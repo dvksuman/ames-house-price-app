@@ -21,8 +21,7 @@ small things — add or update a task first, then implement it.
 
 Keeps the specs in `openspec/changes/*/specs/` the actual source of truth for what
 the system does, instead of code drifting away from documented intent. This matters
-for a graded assignment where the specs/tasks are the evidence trail of what was
-built and why.
+so the specs/tasks are the evidence trail of what was built and why.
 
 ## Working style
 

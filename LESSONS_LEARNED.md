@@ -1,4 +1,4 @@
-# Lessons Learned — AIMLCZG549 Assignment I Build Log
+# Lessons Learned — Build Log
 
 Practical problems hit during development, what caused them, and how they were fixed.
 Updated as new issues are discovered.

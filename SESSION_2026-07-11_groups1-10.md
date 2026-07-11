@@ -82,7 +82,7 @@ docker compose up            # subsequent times (images already built)
    - 11.3 `/predict` returns sensible predictions for multiple inputs
    - 11.4 All `/app-info/*` endpoints return real data
    - 11.5 Streamlit renders all 3 views correctly
-   - 11.6 Screenshots (manual, for assignment report)
+   - 11.6 Screenshots (manual)
 
 Start prompt for next session:
 > "Read `SESSION_2026-07-11_groups1-10.md` and continue with Group 11. Run `/opsx:explore` first."

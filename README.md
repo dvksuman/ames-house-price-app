@@ -1,7 +1,5 @@
 # House Price Prediction — API-Driven Cloud-Native App
 
-Coursework project for AIMLCZG549 (API-Driven Cloud Native Solutions), Assignment I.
-
 ## Business Understanding
 
 **Problem statement:** Estimating a house's sale price accurately, from its physical

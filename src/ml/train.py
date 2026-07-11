@@ -310,7 +310,7 @@ comparison = comparison.round(4)
 # Print the table to the terminal
 print(comparison.to_string())
 
-# Save as CSV for the assignment report and the Streamlit dashboard
+# Save as CSV for reference and the Streamlit dashboard
 comparison_path = os.path.join(OUTPUT_DIR, "model_comparison.csv")
 comparison.to_csv(comparison_path)
 print(f"\nComparison table saved to {comparison_path}")

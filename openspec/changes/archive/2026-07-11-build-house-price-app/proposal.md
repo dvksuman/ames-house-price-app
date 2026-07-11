@@ -1,6 +1,6 @@
 ## Why
 
-Coursework assignment AIMLCZG549 (API-driven Cloud Native Solutions), Assignment I, requires building and demonstrating a cloud-native, API-driven data science/ML application end-to-end: a scheduled data pipeline, a machine learning pipeline with monitoring, and API-based access to application details. Due today — this proposal scopes the full build in one pass so implementation can start immediately.
+Building and demonstrating a cloud-native, API-driven data science/ML application end-to-end: a scheduled data pipeline, a machine learning pipeline with monitoring, and API-based access to application details. This proposal scopes the full build in one pass so implementation can start immediately.
 
 ## What Changes
 

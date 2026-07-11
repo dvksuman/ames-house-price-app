@@ -92,4 +92,4 @@
 - [x] 11.3 Confirm FastAPI `/predict` returns sensible predictions for a few sample inputs
 - [x] 11.4 Confirm all four `/app-info/*` endpoints return real (non-hardcoded) data
 - [x] 11.5 Confirm Streamlit dashboard renders EDA, prediction, and app-details views correctly end-to-end
-- [ ] 11.6 Capture screenshots of each verified view for the assignment report (manual, outside this change's scope)
+- [ ] 11.6 Capture screenshots of each verified view (manual, outside this change's scope)

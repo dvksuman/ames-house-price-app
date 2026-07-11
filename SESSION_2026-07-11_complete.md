@@ -37,7 +37,7 @@ All 11 task groups complete. OpenSpec change archived. Stack verified end-to-end
 
 ## Task 11.6 — remaining (manual)
 
-Take screenshots of each verified view for the assignment report:
+Take screenshots of each verified view:
 - http://localhost:8501 → EDA, Predict Price, App Details views
 - http://localhost:5000 → MLflow runs + registered model
 - http://localhost:4200 → Prefect deployment + run history

@@ -1,11 +1,11 @@
 ## Context
 
-Greenfield project. Assignment requires a single cohesive app demonstrating a scheduled data pipeline, an ML pipeline with monitoring, and API-exposed application details — graded across three sub-objectives (8/5/2 marks). Solo build, due today, local machine only (no cloud account). A prior similar project (diabetes prediction, different repo) used FastAPI + Streamlit + Prefect + MLflow + Docker Compose successfully as an architecture pattern — reused here for a different domain/dataset, built fresh.
+Greenfield project. A single cohesive app demonstrating a scheduled data pipeline, an ML pipeline with monitoring, and API-exposed application details. Solo build, local machine only (no cloud account). A prior similar project (diabetes prediction, different repo) used FastAPI + Streamlit + Prefect + MLflow + Docker Compose successfully as an architecture pattern — reused here for a different domain/dataset, built fresh.
 
 ## Goals / Non-Goals
 
 **Goals:**
-- Satisfy every rubric activity literally (see proposal) with visible, screenshot-able evidence (Prefect UI runs, MLflow experiment/metrics, Swagger docs, Streamlit dashboard).
+- Produce visible, screenshot-able evidence (Prefect UI runs, MLflow experiment/metrics, Swagger docs, Streamlit dashboard).
 - Keep the stack simple enough to build and debug solo, same day.
 - Make the "built-in APIs" sub-objective genuine — wrap real APIs (MLflow REST API, Prefect REST API) rather than inventing fake metadata endpoints.
 
@@ -13,7 +13,7 @@ Greenfield project. Assignment requires a single cohesive app demonstrating a sc
 - No deployment to a real cloud provider (AWS/GCP/Azure) — local Docker Compose only.
 - No authentication/authorization, multi-tenancy, or CI/CD pipeline.
 - No hyperparameter tuning sophistication beyond what's needed to show a working comparison between the two models.
-- Report document and demo video are out of scope for this change (manual follow-up after the app works).
+- Report document and demo video are out of scope for this change.
 
 ## Decisions
 
@@ -33,7 +33,7 @@ Rationale: gives experiment tracking, ≥4 metrics per run, and a model registry
 Rationale: auto-generated OpenAPI/Swagger docs at `/docs` double as report screenshot evidence; Pydantic validates prediction request/response schemas.
 
 **Dashboard: Streamlit, calls FastAPI only (no direct DB/model access from the dashboard process).**
-Rationale: keeps a clean API-driven architecture (the assignment's central theme) — the dashboard is a client of the API, not a second write path into the data/model layer.
+Rationale: keeps a clean API-driven architecture — the dashboard is a client of the API, not a second write path into the data/model layer.
 
 **Deployment: Docker Compose, 4 services.**
 ```
@@ -103,7 +103,7 @@ Preprocessing is responsible for cleaning and imputing only. Categorical encodin
 - `output/summary_stats.csv` — numeric describe() output
 - `output/missing_values.csv` — per-column missing count + percentage
 
-Both are saved as CSV files (not just logged) so they can be referenced in the assignment report without re-running the pipeline.
+Both are saved as CSV files (not just logged) so they can be referenced without re-running the pipeline.
 
 ## EDA Design Decisions
 
@@ -152,7 +152,7 @@ Each existing function (`ingest()`, `preprocess()`, `run_eda()`) is imported ins
 Each `@task` calls `get_run_logger()` to log a ▶ start message and ✓ completion message with row/column counts. The existing `logger.info()` calls inside `ingest()`, `preprocess()`, and `run_eda()` continue to emit normally — Prefect 3.x captures stdlib `logging` records from within task execution context and routes them to the UI.
 
 **Deployment: `flow.serve()` not `prefect deploy` + worker.**
-`pipeline.serve(name=..., interval=timedelta(minutes=2))` is a single call that registers the deployment with the local Prefect server AND acts as the executor. No separate work pool or worker process needed. Runs every 2 minutes. This is the right choice for a local demo/assignment.
+`pipeline.serve(name=..., interval=timedelta(minutes=2))` is a single call that registers the deployment with the local Prefect server AND acts as the executor. No separate work pool or worker process needed. Runs every 2 minutes. This is the right choice for a local demo.
 
 **Working directory: set explicitly at module level.**
 `pipeline_flow.py` calls `os.chdir(PROJECT_ROOT)` at import time (where `PROJECT_ROOT` is derived from `Path(__file__)`). All three existing scripts use relative paths (`data/raw/...`, `data/processed/...`, `output/...`). Without this, a serve process started from any other directory would silently write to the wrong paths or raise `FileNotFoundError`.
@@ -168,7 +168,7 @@ Each `@task` calls `get_run_logger()` to log a ▶ start message and ✓ complet
 - **[Risk] Kaggle API auth may not be set up on this machine, blocking dataset download.** → Mitigation: ingestion script tries Kaggle API first, falls back to a direct HTTPS download of the public Ames Housing CSV; document whichever path actually worked.
 - **[Risk] Same-day deadline leaves little slack for Docker networking/debugging.** → Mitigation: get all 4 services running individually via plain `python`/`uvicorn`/`streamlit run` first, containerize last, once logic is proven.
 - **[Risk] Prefect server + MLflow server both need to be up before FastAPI can wrap their APIs.** → Mitigation: `depends_on` + healthchecks in docker-compose; FastAPI's app-info endpoints handle connection errors gracefully (return 503 with a clear message) rather than crashing.
-- **[Risk] XGBoost training time on 2,930 rows is trivial, but hyperparameter choices could still eat time if over-tuned.** → Mitigation: fixed, reasonable hyperparameters (no grid search) — this is a coursework demo, not a Kaggle leaderboard attempt.
+- **[Risk] XGBoost training time on 2,930 rows is trivial, but hyperparameter choices could still eat time if over-tuned.** → Mitigation: fixed, reasonable hyperparameters (no grid search) — this is a local demo, not a Kaggle leaderboard attempt.
 
 ## Open Questions
 
@@ -208,7 +208,7 @@ None blocking — proceed to specs/tasks. Resolve the Kaggle-vs-CSV-mirror inges
 
 ## Group 8 — API Layer Design Decisions
 
-**Input schema (8.1)**: Accept all 213 encoded features as optional fields with default 0.0. Rationale: the model was trained on fully encoded data with no missing values; accepting partial input with invented defaults would silently degrade prediction accuracy. For an assignment demo, callers are expected to send a full row from the encoded dataset. All 213 fields declared as `Optional[float] = 0.0` in the Pydantic request model.
+**Input schema (8.1)**: Accept all 213 encoded features as optional fields with default 0.0. Rationale: the model was trained on fully encoded data with no missing values; accepting partial input with invented defaults would silently degrade prediction accuracy. Callers are expected to send a full row from the encoded dataset. All 213 fields declared as `Optional[float] = 0.0` in the Pydantic request model.
 
 **Model loading strategy (8.2)**: Load `models:/AmesPricePredictor@production` once at app startup using FastAPI's lifespan context manager, store in `app.state.model`. Not per-request — loading per request adds 1-2s latency and is unnecessary since the model is static. If the model cannot be loaded at startup the app refuses to start, which is the correct behaviour (no point serving /predict with no model).
 
