@@ -166,68 +166,174 @@ before and after certain actions.
 
 They live in `.claude/hooks/` and are wired up in `.claude/settings.json`.
 
-### Hook 1 — PreToolUse: Task Gate (`pre_tool_gate.py`)
+### The problem hooks solve
 
-**When it fires:** Before any file write (`Write`, `Edit`) to the `src/` directory,
-and before any `git commit`.
+AI assistants are fast but inconsistent. Left to itself, Claude might:
+- Write code without a corresponding task (no traceability)
+- Commit code without updating the documentation
+- Forget to write a SESSION file at the end of a session
+- Skip the post-task checklist when in flow
+- Lose track of project rules after a long conversation gets compressed
 
-**What it does (Gate 1 — writes):**
-Blocks writes to `src/` unless a task is marked `[~]` (in-progress) in `tasks.md`.
-This prevents Claude from writing code speculatively — every line of code must trace
-back to an explicit task.
+Hooks make these behaviours **structurally impossible** — they fire automatically,
+block the action if something is missing, and tell Claude exactly what to fix.
+You don't have to remind Claude every session. The hooks do it.
 
-**What it does (Gate 2 — commits):**
-Blocks `git commit` if `LESSONS_LEARNED.md` or `TOI.md` haven't been updated since
-the last `src/` file was edited. This forces documentation to happen before the commit,
-not after (when it gets forgotten).
+Think of them like the safety checks on a power tool — you can still use the tool
+freely, but it won't let you do something dangerous by accident.
 
-**Why it exists:** Without this gate, Claude (and humans) tend to commit code and
-promise to "update the docs later". Later never comes. The hook makes it structurally
-impossible to skip.
+---
 
-### Hook 2 — PostToolUse: SESSION File Check (`post_commit_check.py`)
+### Hook 1 — Task Gate (fires before writing code or committing)
 
-**When it fires:** After every `git commit`.
+**File:** `.claude/hooks/pre_tool_gate.py`
+**Trigger:** Before any file write to `src/`, and before any `git commit`
 
-**What it does:**
-Checks whether a SESSION file exists and whether it's newer than the latest commit.
-If not, it injects a hard reminder into Claude's context: "HARD GATE — write a
-SESSION file NOW before doing anything else."
+#### Gate A — No code without a task
 
-**Why it exists:** SESSION files are easy to skip when you're in flow. The hook
-makes the omission visible immediately after the commit, while the context is still fresh.
-
-### Hook 3 — Stop: Post-Task Checklist (`post_task_check.sh`)
-
-**When it fires:** When Claude finishes a response (Stop event).
+**The problem it solves:**
+Claude is helpful and will often fix things "while it's there" — touching files
+that weren't part of the current task. This is risky: it means untested changes
+go in with no record of why, making the codebase hard to audit.
 
 **What it does:**
-Prints the 7-step post-task checklist to Claude's context as a reminder:
-1. Run the code
-2. Verify outputs
-3. Mark `[x]` in tasks.md
-4. Update LESSONS_LEARNED.md
-5. Update TOI.md
-6. Update design.md
-7. Git commit
+Before writing any file under `src/`, the hook checks `tasks.md` for a task
+marked `[~]` (in-progress). If none exists, it blocks the write and says:
 
-**Why it exists:** The checklist is defined in `CLAUDE.md`, but Claude would sometimes
-skip steps when working quickly. The hook makes the checklist appear automatically
-after every response, so it can't be forgotten.
+```
+BLOCKED: you are about to write to 'src/api/main.py'
+but no task is marked [~] in tasks.md.
+Steps to fix:
+  1. Open tasks.md
+  2. Change the relevant task from [ ] to [~]
+  3. Then retry the write.
+```
 
-### Hook 4 — PostCompact: Memory Reload (global settings)
+**The effect:** Every line of code in this project traces back to an explicit task.
+Nothing was written speculatively or "just to fix something quickly".
 
-**When it fires:** After Claude's context is auto-compacted (when the conversation
-gets very long, older messages are summarized to free up space).
+#### Gate B — No commit without updated docs
+
+**The problem it solves:**
+It's very easy to commit code and tell yourself "I'll update LESSONS_LEARNED and
+TOI later." Later never comes. After a few sessions, the documentation is weeks
+behind the code and useless.
 
 **What it does:**
-Prints a reminder to reload core memory files (`enforcement_protocol_shared.md`,
-`ROUTING_RULES.md`, project context) so behaviour stays consistent across the
-context boundary.
+Before allowing a `git commit`, the hook checks whether `LESSONS_LEARNED.md` and
+`TOI.md` were modified *after* the last `src/` file was edited. If either is stale,
+it blocks the commit:
 
-**Why it exists:** When context compacts, Claude starts the next phase without
-full memory of earlier instructions. This hook ensures the key rules are reloaded
-immediately.
+```
+BLOCKED: git commit is not allowed until LESSONS_LEARNED.md is updated.
+
+Steps to fix:
+  1. Append new lessons to LESSONS_LEARNED.md (step 4 of checklist)
+  2. Append new commands to TOI.md (step 5 of checklist)
+  3. Then retry git commit.
+```
+
+**The effect:** Documentation is always in sync with the code. The commit is the
+signal that everything — code AND docs — is done.
+
+---
+
+### Hook 2 — SESSION File Check (fires after every git commit)
+
+**File:** `.claude/hooks/post_commit_check.py`
+**Trigger:** After every `git commit`
+
+**The problem it solves:**
+SESSION files are the handoff brief for the next conversation. Without one, the
+next session starts cold — Claude has to re-read git log, re-check which tasks are
+done, and re-derive state that could have been written down in 2 minutes. This
+wastes 10–15 minutes at the start of every session.
+
+The natural time to write a SESSION file is right after a commit — when everything
+is fresh. But it's also the time when you're most tempted to say "done!" and close
+the laptop.
+
+**What it does:**
+After every `git commit`, the hook checks whether a `SESSION_*.md` file exists and
+whether it's newer than the commit. If not, it injects a hard-stop into Claude's
+context:
+
+```
+HARD GATE — DO NOT PROCEED:
+  SESSION file is older than the latest git commit.
+  You MUST write a fresh SESSION_YYYY-MM-DD_<topic>.md checkpoint file NOW.
+  Include: groups done, last commit hash, key output files, exact next step.
+  Then git commit it.
+  Only after that is the group truly complete.
+```
+
+**The effect:** Every session ends with a fresh SESSION file. The next session
+opens it first and picks up exactly where things left off.
+
+---
+
+### Hook 3 — Post-Task Checklist (fires when Claude finishes a response)
+
+**File:** `.claude/hooks/post_task_check.sh`
+**Trigger:** When Claude stops generating a response (Stop event)
+
+**The problem it solves:**
+The 7-step post-task checklist is defined in `CLAUDE.md`. Claude reads it at the
+start of a session but forgets it when deep in implementation. Steps 4, 5, and 6
+(update LESSONS_LEARNED, TOI, design.md) are the ones most often skipped.
+
+**What it does:**
+After every Claude response, the checklist is printed back into Claude's context
+as a visible reminder:
+
+```
+POST-COMMIT CHECKLIST (CLAUDE.md — mandatory)
+  1. Run the code — confirm real output
+  2. Verify outputs — file shapes, row counts, nulls
+  3. [x] tasks.md — checkbox marked
+  4. LESSONS_LEARNED.md — non-trivial problems appended
+  5. TOI.md — useful commands appended
+  6. design.md — design decisions recorded
+  7. Git commit — done ✓ (you are here)
+  8. SESSION file — if group boundary, write and commit
+```
+
+**The effect:** Claude sees the checklist after every response and self-corrects
+if any step was missed — without the user having to say anything.
+
+---
+
+### Hook 4 — Memory Reload after Context Compression (global)
+
+**Location:** `~/.claude/settings.json` (applies to all projects)
+**Trigger:** After Claude's context is auto-compacted
+
+**The problem it solves:**
+When a conversation gets very long (thousands of lines of tool calls and responses),
+Claude Code automatically compresses older messages into a summary to free up space.
+This is called "compaction." After compaction, Claude continues the conversation —
+but it no longer has the full text of earlier messages, only the summary.
+
+The risk: project rules defined in memory files (like "never claim something is
+fixed without verifying it" or "always update design.md") may not survive the
+summary intact. Claude might silently drop enforced behaviours after a compaction.
+
+**What it does:**
+After every compaction, the hook fires and prints a reminder into Claude's context:
+
+```
+CHECKPOINT COMPLETE - Reloading core memory files...
+RELOAD REQUIRED:
+  - enforcement_protocol_shared.md
+  - PROJECT.md for current project
+(Memory files reloaded for next phase)
+```
+
+This tells Claude to explicitly re-read the memory files before continuing, so
+the rules stay active across the context boundary.
+
+**The effect:** Consistent behaviour throughout a long session, even after the
+conversation has been compressed multiple times.
 
 ---
 
