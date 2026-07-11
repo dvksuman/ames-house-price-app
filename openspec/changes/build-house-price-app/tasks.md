@@ -44,12 +44,12 @@
 
 ## 6. ML Pipeline: Training and Evaluation
 
-- [ ] 6.1 Implement 70/30 train/test split with a fixed random seed on the encoded feature matrix
-- [ ] 6.2 Train Ridge/Lasso regression on the normalized/scaled features
-- [ ] 6.3 Train XGBoost regression on the raw (unscaled) encoded features
-- [ ] 6.4 Compute RMSE, MAE, R², and MAPE for each model on the test set
-- [ ] 6.5 Produce a feature-importance ranking (coefficients for linear model, `feature_importances_` for XGBoost)
-- [ ] 6.6 Produce a side-by-side model comparison table/report
+- [x] 6.1 Implement 70/30 train/test split with a fixed random seed on the encoded feature matrix
+- [x] 6.2 Train Ridge/Lasso regression on the normalized/scaled features
+- [x] 6.3 Train XGBoost regression on the raw (unscaled) encoded features
+- [x] 6.4 Compute RMSE, MAE, R², and MAPE for each model on the test set
+- [x] 6.5 Produce a feature-importance ranking (coefficients for linear model, `feature_importances_` for XGBoost)
+- [x] 6.6 Produce a side-by-side model comparison table/report
 
 ## 7. MLOps: MLflow Tracking
 

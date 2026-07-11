@@ -320,3 +320,27 @@ PREFECT_API_URL=http://127.0.0.1:4200/api python -m src.ops.pipeline_flow
 ---
 
 *Last updated: 2026-07-10*
+
+---
+
+## LL-09: Bool columns in one-hot CSV must be cast to int before sklearn
+
+**When**: Group 6, Task 6.1  
+**What happened**: `ames_housing_encoded.csv` stores one-hot encoded columns as Python `True`/`False`. Pandas reads them as `object` dtype (not numeric), which causes sklearn to raise a `ValueError: could not convert string to float`.  
+**Why it happened**: Python's `bool` type serialises as `True`/`False` strings in CSV. Pandas infers object dtype for those strings unless you cast explicitly.  
+**Fix**: `df[df.select_dtypes(include="bool").columns] = df[bool_cols].astype(int)` right after loading.  
+**Takeaway**: Always check `df.dtypes.value_counts()` after loading an encoded CSV. Cast bools to int before any sklearn call.
+
+---
+
+## LL-10: Ridge/Lasso need StandardScaler; XGBoost does not
+
+**When**: Group 6, Task 6.2–6.3  
+**What happened**: Fitting the scaler on `X_train` then transforming `X_test` (not refitting) is the correct pattern. Scaling `X_test` with the train scaler avoids data leakage.  
+**Why it happened**: If you fit the scaler on all data before the split, test-set statistics leak into training — inflating reported performance.  
+**Fix**: `scaler.fit_transform(X_train)` → `scaler.transform(X_test)`. Never `fit` on test data.  
+**Takeaway**: Tree models are scale-invariant; linear models with regularisation are not. Keep separate scaled and unscaled copies of X_train/X_test.
+
+---
+
+*Last updated: 2026-07-11*

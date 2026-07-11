@@ -189,3 +189,19 @@ env | grep -i -E 'ssl|cert'                  # find SSL/cert-related environment
 nslookup <host>                              # check DNS resolution (rules out DNS as cause)
 ping -c 3 <host>                             # check raw connectivity (rules out network as cause)
 ```
+
+## ML Training
+
+```bash
+# Run Group 6 training script (from project root)
+python3 -m src.ml.train
+
+# Quick check of encoded CSV shape and dtypes
+python3 -c "import pandas as pd; df=pd.read_csv('data/processed/ames_housing_encoded.csv'); print(df.shape, df.dtypes.value_counts())"
+
+# View model comparison table
+cat output/model_comparison.csv
+
+# View top features per model
+cat output/feature_importance.csv | python3 -c "import sys,pandas as pd; df=pd.read_csv(sys.stdin); print(df.groupby('model').head(5).to_string())"
+```

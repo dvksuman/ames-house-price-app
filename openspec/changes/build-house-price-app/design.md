@@ -173,3 +173,19 @@ Each `@task` calls `get_run_logger()` to log a ▶ start message and ✓ complet
 ## Open Questions
 
 None blocking — proceed to specs/tasks. Resolve the Kaggle-vs-CSV-mirror ingestion path empirically during implementation and note the outcome in the code/comments.
+
+## Group 6 — ML Pipeline Design Decisions
+
+**6.1 Train/test split**: 70/30, `random_state=42`. No stratification (regression target, not classification).
+
+**6.2 Ridge/Lasso scaling**: StandardScaler fitted on `X_train` only, then `.transform(X_test)`. This avoids data leakage. Scaler saved to `data/models/scaler_ml.joblib` for API use.
+
+**6.2 Lasso alpha**: `alpha=0.001` (weak regularisation). Zeroed out 80 of 214 features — effective automatic feature selection.
+
+**6.3 XGBoost**: Raw encoded features (no scaling). 500 trees, `learning_rate=0.05`, `max_depth=6`. Tree models are scale-invariant.
+
+**6.4 Metrics in log space + dollar scale**: RMSE/MAE computed in log(SalePrice) space (model's native space), then back-transformed via `np.exp()` for dollar-scale RMSE/MAE/MAPE. MAPE requires dollar scale (log space MAPE is not meaningful).
+
+**6.5 Feature importance**: Ridge/Lasso use `abs(coef_)`; XGBoost uses `feature_importances_` (gain-based). One-hot dummies shown individually (not aggregated) — simpler and still informative.
+
+**6.6 Outputs**: `output/model_metrics.csv`, `output/feature_importance.csv`, `output/model_comparison.csv`, `output/model_comparison.json` (for FastAPI).

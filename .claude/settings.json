@@ -1,5 +1,17 @@
 {
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /Users/dvksuman/API/.claude/hooks/pre_tool_gate.py",
+            "statusMessage": "Checking task gate..."
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
