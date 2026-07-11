@@ -53,10 +53,10 @@
 
 ## 7. MLOps: MLflow Tracking
 
-- [ ] 7.1 Configure MLflow tracking URI (local SQLite backend)
-- [ ] 7.2 Log hyperparameters, all 4 metrics, and the model artifact for each of the two training runs to MLflow
-- [ ] 7.3 Register the better-performing model in the MLflow Model Registry (e.g. stage "Staging" or "Production")
-- [ ] 7.4 Verify locally: start MLflow UI, confirm both runs, metrics, and registered model are visible
+- [x] 7.1 Configure MLflow tracking URI (local SQLite backend)
+- [x] 7.2 Log hyperparameters, all 4 metrics, and the model artifact for each of the two training runs to MLflow
+- [x] 7.3 Register the better-performing model in the MLflow Model Registry (e.g. stage "Staging" or "Production")
+- [x] 7.4 Verify locally: start MLflow UI, confirm both runs, metrics, and registered model are visible
 
 ## 8. API Layer (FastAPI)
 

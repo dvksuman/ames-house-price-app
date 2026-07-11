@@ -205,3 +205,24 @@ cat output/model_comparison.csv
 # View top features per model
 cat output/feature_importance.csv | python3 -c "import sys,pandas as pd; df=pd.read_csv(sys.stdin); print(df.groupby('model').head(5).to_string())"
 ```
+
+## MLflow
+
+```bash
+# Install mlflow
+.venv/bin/pip install "mlflow>=2.10"
+
+# Run the Group 7 tracking script (trains all 3 models + logs to MLflow + registers XGBoost)
+cd /Users/dvksuman/API
+.venv/bin/python3 -m src.ml.train_mlflow
+
+# Start the MLflow UI (reads from SQLite backend)
+.venv/bin/mlflow ui --backend-store-uri sqlite:///mlruns.db --port 5000
+# Then open http://localhost:5000
+
+# Check registered models via MLflow REST API
+curl -s http://localhost:5000/api/2.0/mlflow/registered-models/list | python3 -m json.tool
+
+# Load registered model by alias (for use in FastAPI Group 8)
+# model_uri = "models:/AmesPricePredictor@production"
+```

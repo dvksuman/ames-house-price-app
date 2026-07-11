@@ -343,4 +343,32 @@ PREFECT_API_URL=http://127.0.0.1:4200/api python -m src.ops.pipeline_flow
 
 ---
 
+## LL-07 — MLflow 3.x: `artifact_path` deprecated, use `name`
+
+**When**: Group 7, task 7.2
+
+**What happened**: `mlflow.sklearn.log_model(model, artifact_path="model")` produced a `FutureWarning` in mlflow 3.14 — `artifact_path` is deprecated.
+
+**Why**: MLflow 3.x unified the `log_model` API. The `artifact_path` kwarg was renamed to `name`.
+
+**Fix**: Change `artifact_path="model"` → `name="model"` in all `log_model` calls.
+
+**Takeaway**: Always check the installed mlflow version (`pip show mlflow`) before referencing old tutorials — the API changed significantly between 2.x and 3.x.
+
+---
+
+## LL-08 — MLflow 2.9+ stages deprecated; use aliases for Model Registry
+
+**When**: Group 7, task 7.3
+
+**What happened**: The old `client.transition_model_version_stage(..., stage="Production")` API shows a deprecation warning in mlflow 2.9+ and will be removed.
+
+**Why**: MLflow replaced fixed stages (None/Staging/Production/Archived) with free-form aliases.
+
+**Fix**: Use `client.set_registered_model_alias(name, "production", version)` instead.
+
+**Takeaway**: For mlflow>=2.9, always use aliases for labelling model versions. In Group 8 (FastAPI), load the registered model with `models:/AmesPricePredictor@production` URI.
+
+---
+
 *Last updated: 2026-07-11*

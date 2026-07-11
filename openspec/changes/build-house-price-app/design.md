@@ -189,3 +189,19 @@ None blocking — proceed to specs/tasks. Resolve the Kaggle-vs-CSV-mirror inges
 **6.5 Feature importance**: Ridge/Lasso use `abs(coef_)`; XGBoost uses `feature_importances_` (gain-based). One-hot dummies shown individually (not aggregated) — simpler and still informative.
 
 **6.6 Outputs**: `output/model_metrics.csv`, `output/feature_importance.csv`, `output/model_comparison.csv`, `output/model_comparison.json` (for FastAPI).
+
+## Group 7 — MLflow Tracking Design Decisions
+
+**Script structure**: Created `src/ml/train_mlflow.py` as a separate Group 7 script rather than modifying `train.py`. `train.py` remains the Group 6 artifact; `train_mlflow.py` is the Group 7 artifact. This keeps the evidence trail clean and avoids overwriting Group 6 output.
+
+**MLflow version**: mlflow 3.14.0 installed (requirements.txt pins >=2.10). The `log_model` API changed in 3.x — `artifact_path=` kwarg renamed to `name=`. Updated accordingly.
+
+**Aliases over stages**: MLflow 2.9+ deprecated the old Staging/Production stages in favour of free-form aliases. Used `client.set_registered_model_alias("AmesPricePredictor", "production", version=1)` instead of the deprecated `transition_model_version_stage`. In Group 8 (FastAPI), load via `models:/AmesPricePredictor@production`.
+
+**Model log flavours**: Ridge and Lasso logged with `mlflow.sklearn.log_model` (joblib format). XGBoost logged with `mlflow.xgboost.log_model` (native XGBoost format — richer artifact with better signature inference).
+
+**SQLite path**: Used absolute path `f"sqlite:///{PROJECT_ROOT}/mlruns.db"` so the DB always lands in the project root regardless of the working directory the script is invoked from.
+
+**Feature importance artifact**: `output/feature_importance.csv` (from Group 6) logged as an extra artifact on the XGBoost run for richer run detail in the UI.
+
+**Registered model name**: `AmesPricePredictor` — this is the name Group 8 (FastAPI) will use to load the model at startup.
